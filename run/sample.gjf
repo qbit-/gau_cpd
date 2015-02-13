@@ -1,0 +1,17 @@
+%chk=sample.chk
+%mem=2300Mb
+%nproc=4
+!%subst l530 /users/rss3/phf/
+#p tpsstpss nosym pop=none
+!guess=(read) 
+# sto-3g 
+
+H2 molecule
+
+0 1
+H        0.000000    0.000000    0.000000
+H        1.000000    0.000000    0.000000
+
+
+
+
