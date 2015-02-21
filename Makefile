@@ -52,7 +52,7 @@ LAPext = ./lapack_LINUX.a
 	$(MAKE) -f $(GAU_DIRL)/bsd/gdv.make MAKE='$(MAKE)' \
 	PROFFLAG='$(PROFFLAG)' $*.lo
 
-all: l560.exe
+all: l320.exe
 
 #bdrys.o:
 #	gau-get bdrys utilam
@@ -75,11 +75,11 @@ $(COBJS):
 	PROFFLAG='$(PROFFLAG)' $*.o
 
 
-# = link 560 =
+# = link 320 =
 
-MAIN560 = ml560.o
+MAIN320 = ml320.o
 
-OBJ560 = aobstf.o  binom.o   bldngg.o  bldpgg.o  cnvtst.o  detmat.o  \
+OBJ320 = aobstf.o  binom.o   bldngg.o  bldpgg.o  cnvtst.o  detmat.o  \
 	 detmt2.o  dmblck.o  erictr.o  evalhmt.o evals2.o  evalsmt.o \
 	 evalyg.o  evlygg.o  fixmat.o  fixmt2.o  fockdg.o  focksel.o \
 	 formfk.o  formgg.o  formng.o  formpg.o  formyg.o  gaufmt.o  \
@@ -88,13 +88,13 @@ OBJ560 = aobstf.o  binom.o   bldngg.o  bldpgg.o  cnvtst.o  detmat.o  \
 	 prtdmt.o  prtocc.o  rtfact.o  solvci.o  sptblk.o  sptmat.o  \
 	 trpgrd.o  trprct.o  wigarr.o  wignerd.o clgord.o
 
-l560.exe: $(MAIN560) $(OBJ560) $(NUTILM)
-	$(FC0) -g -o l560.exe $(MAIN560) $(OBJ560) $(NUTIL) \
+l320.exe: $(MAIN320) $(OBJ320) $(NUTILM)
+	$(FC0) -g -o l320.exe $(MAIN320) $(OBJ320) $(NUTIL) \
 	$(LAPext) $(FC1) $(BLAS)
-	chmod o-rx l560.exe
+	chmod o-rx l320.exe
 
-ck560:
-	cat $(MAIN560:.o=.F) $(OBJ560:.o=.F) $(OBJUT:.o=.F) \
+ck320:
+	cat $(MAIN320:.o=.F) $(OBJ320:.o=.F) $(OBJUT:.o=.F) \
 	$(NUTIL:.o=.F) >x.x
 	checkf x.x x
 	rm -f x.x

@@ -10,7 +10,7 @@ C |  CPD-2INT   ---   the Scuseria group, 02.2015              |
 C |                                                            |
 C |                                                   v0.1 -   |
 C |                                                            |
-C |    ( link 560, part of the Gaussian system of programs )   |
+C |    ( link 320, part of the Gaussian system of programs )   |
 C |                                                            |
 C |                                                            |
 C |  This link performs canonical decomposition of the 2       |
@@ -243,11 +243,11 @@ C     format statements
       write (iout, *) ' '
       write (iout, *) ' +-------------------------------------------+'
       write (iout, *) ' |                                           |'
-      write (iout, *) ' |  LINK 530 - Projected Hartree-Fock (PHF)  |'
-      write (iout, *) ' |     Self-Consistent Field (SCF) Code      |'
+      write (iout, *) ' |  LINK 320 - Canonical decomposition of 2e |'
+      write (iout, *) ' |     integrals                             |'
       write (iout, *) ' |                                           |'
       write (iout, *) ' |                                           |'
-      write (iout, *) ' |         the Scuseria group, v0.2, 07.2011 |'
+      write (iout, *) ' |         the Scuseria group, v0.1, 02.2015 |'
       write (iout, *) ' +-------------------------------------------+'
       write (iout, *) ' '
 
