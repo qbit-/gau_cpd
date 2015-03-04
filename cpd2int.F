@@ -110,7 +110,11 @@ C     memory allocation variables
 C     other variables
       
       integer     iopcl, nbas6d
-      integer     ngridmx, ntheta, nphi, mxradu, mxangu, ngridu
+      integer     ngridmx, ntheta, nphi, mxradu, mxangu, ngridu, iprune
+      integer     iopwrt, leniopwrt, lenscrwrt
+
+      parameter  ( leniopwrt = 5 )
+      dimension   iopwrt(leniopwrt)
       
 C     CPD2E RWF files
 
@@ -324,31 +328,43 @@ C     Fill arrays with symmetry related quantities.
         call fileio (2, -neqsh2, lenne2, v(ineqs2), 0)
       endif
 
+
+C     Compute the collocation matrix X(mu,G) and save it to the RWF irwfac
+      
+      call DecPrn(iout,iprint,iradan,0,iprune,ntheta,nphi,
+     &  mxradu,mxangu,xx) 
+      ngridmx = mxradu * mxangu * natoms
+
+      call conddf (irwfac, ngridmx*nbas6d)
+
+C     Prepare the arguments passed/received from the writing routine
+
+      lenscrwrt  = lenv / ngridmx
+      
+C     iopwrt integer array:
+C        1 - RWF to store X(mu,G)
+C        2 - total number of grid points (incremented by working routine)
+      
+      iopwrt(1) = irwfac
+      iopwrt(2) = 0
+      
 C      call NIn3Su(iout,iprint,iopcl,ParOK,ParDig,NPMax,ReadB,           
 C     &  UseBfn,UseMO,UseOcc,IUseDn,IDerBf,IDerRh,IRadAn,IRanWt,IRanGd,        
 C     &  IRType,NMO,NAtoms,NBas6D,IAn,IAtTyp,AtmChg,C,AtNetC,CMO,OccMO,
 C     &  PA,PB,HvRMax,RQMax,BfnFnc,IntBfn,WPBfn,LScrBf,MOFunc,IntMO,WPMO,
 C     &  LScrMO,DenFnc,IntDen,WPDen,LScrDn,V,MDV)
 
-
-C     Compute the collocation matrix X(mu,G) and save it to the RWF irwfac
-      
-      call DecPrn(iout,iprint,iradan,0,ntheta,nphi,mxradu,
-     &     mxangu,xx)
-      ngridmx = mxradu * mxangu
-
-      write(iout, *) natoms, mxradu, mxangu
-      
       call NIn3Su(iout,iprint,iopcl,.false.,.true.,1,.true.,
      &  .true.,.false.,.false.,0,0,0,iradan,iranwt,irangd,
      &  2,junk,natoms,nbas6d,ian,iattyp,atmchg,c,xx,xx,xx,
-     &  xx,xx,.false.,junk,atquadwrt,ngridu,xx,1,MOFunX,junk,xx,
-     &  junk,DenFnX,junk,xx,junk,v,lenv)
+     &  xx,xx,.false.,xx,atquadwrt,iopwrt,xx,lenscrwrt,MOFunX,junk,
+     &  xx,junk,DenFnX,junk,xx,junk,v,lenv)
 
-
+C     Read back the output from the writing routine
+      ngridu = iopwrt(2)
+      
       write (iout, *) 'nin3su completed, npoints = ', ngridu
       call chainX (0)
-
 
       return
       end

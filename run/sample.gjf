@@ -2,7 +2,7 @@
 %mem=2300Mb
 %nproc=4
 !%subst l530 /users/rss3/phf/
-#p tpsstpss nosym pop=none
+#p hf nosym pop=none
 !guess=(read) 
 # sto-3g 
 
