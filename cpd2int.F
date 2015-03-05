@@ -107,7 +107,7 @@ C     memory allocation variables
       integer     jend, lenv, mdv, junk
       real*8      xx
 
-C     other variables
+C     quadrature related variables
       
       integer     iopcl, nbas6d
       integer     ngridmx, ntheta, nphi, mxradu, mxangu, ngridu, iprune
@@ -115,6 +115,10 @@ C     other variables
 
       parameter  ( leniopwrt = 5 )
       dimension   iopwrt(leniopwrt)
+
+C     other variables
+
+      real*8      tolinv
       
 C     CPD2E RWF files
 
@@ -358,12 +362,18 @@ C     &  LScrMO,DenFnc,IntDen,WPDen,LScrDn,V,MDV)
      &  .true.,.false.,.false.,0,0,0,iradan,iranwt,irangd,
      &  2,junk,natoms,nbas6d,ian,iattyp,atmchg,c,xx,xx,xx,
      &  xx,xx,.false.,xx,atquadwrt,iopwrt,xx,lenscrwrt,MOFunX,junk,
-     &  xx,junk,DenFnX,junk,xx,junk,v,lenv)
+     &  xx,junk,DenFnX,junk,xx,junk,v(jend),lenv-jend)
 
 C     Read back the output from the writing routine
+C     actual total number of grid points:
       ngridu = iopwrt(2)
       
       write (iout, *) 'nin3su completed, npoints = ', ngridu
+
+      tolinv = 1e-6
+      call frmspovinv (iout, iprint, nbas6d, ngridu, tolinv,
+     &     irwfac, irwspo, v(jend), lenv-jend)
+
       call chainX (0)
 
       return
