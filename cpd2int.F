@@ -86,16 +86,7 @@ C     general array
       integer     lengen
       parameter   ( lengen = 55 )
       real*8      dgen(lengen)
-
-
-C     prism variables
-
-      integer     ifmm, ipflag, fmflag, fmflg1, nfxflg, ihmeth, iseall
-      integer     lseall, momega, nomega
-      logical     allowp(50), fmm
-      parameter   ( momega = 5, nomega = 6 )
-      real*8      omega(momega,nomega)
-
+      integer     iopcl
 
 C     general options variables
 
@@ -104,27 +95,21 @@ C     general options variables
       
 C     memory allocation variables
 
-      integer     jend, lenv, mdv, junk
-      real*8      xx
-
-C     quadrature related variables
+      integer     jend, lenv, next, junk
+      integer     j2eint, len2eint
       
-      integer     iopcl, nbas6d
-      integer     ngridmx, ntheta, nphi, mxradu, mxangu, ngridu, iprune
-      integer     iopwrt, leniopwrt, lenscrwrt
-
-      parameter  ( leniopwrt = 5 )
-      dimension   iopwrt(leniopwrt)
-
 C     other variables
 
-      real*8      tolinv
-      
+      integer     nbsq
+      integer     ngrid, nbas6d   
+      real*8      tolinv, accdes
+
 C     CPD2E RWF files
 
-      integer     irwfac, irwspo, irwz, irwe
+      integer     irwfac, irwfact, irwspo, irwz, irwe, irw2efull
 
-      parameter   ( irwfac = 825, irwspo = 826, irwz = 827, irwe = 828 )
+      parameter   ( irwfac = 824, irwfact = 825, irwspo = 826 )
+      parameter   ( irwz = 827, irwe = 828, irw2efull = 830 )
 
 C     Gaussian RWF files
 C       - irwgen - general array (see Link 1 for details)
@@ -143,27 +128,19 @@ C       - irwmol - /mol/ common
       parameter   ( irws = 514, irwx = 685, irwh = 515 )
       parameter   ( irwmol = 997 )
       
-C       - neq, neqshl, neqsh2 - files useful for symmetry
+C    - neq, neqshl, neqsh2 - files useful for symmetry in PRISM
 
       integer     neq, neqshl, neqsh2
-
       parameter   ( neq = 580, neqshl = 565, neqsh2 = 726 )
-
 
 C     symmetry related variables
 
       integer     jsym2e
-      integer     nop1, nop2, nopuse
-      integer     lenneq, lennes, lenne2
-      integer     ineq, ineqsh, ineqs2
-
 
 C     functions called
 
-      real*8      scfacc, decacc
-      integer     intowp, itqry
-      external    atquadwrt, mofunx, denfnx 
-      
+      real*8      decacc
+      integer     intowp
 
 C     format statements
 
@@ -171,7 +148,7 @@ C     format statements
  1010 format (' iprint = ', I2)
  1011 format ('   grid selection:')      
  1012 format (' iradan = ', I6, ' iranwt = ', I5, ' irangd = ', I5)
- 1020 format ('   iop')
+ 1020 format (' accuracy = ',D8.3, ' pseudoinv. tolerance = ', D8.3)
  1021 format (' exact integrals will be used ')
  1022 format (' density fitted integrals will be used ')
  1040 format (' integrals will be replicated using symmetry')
@@ -190,9 +167,9 @@ C     format statements
       jend = 1
       lenv = ngot
 
-C     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-C     %  Options for CPD2E            %
-C     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+C----------------------------------------------------------------------+
+C       Process options for CPD2E                                      |
+C----------------------------------------------------------------------+
 
 
       write (iout, *)
@@ -208,9 +185,8 @@ C     Set printing level.
       write (iout, 1010) iprint
       
 C     Set up grid options 
-C     =======================
-
-C     Read grid options from ilsw
+C     Read grid parameters from ilsw, but substitute 
+C     with user supplied if available
       
       call ilsw (2, 13, iradan)      
       call ilsw (2, 35, iranwt)
@@ -228,9 +204,13 @@ C     Read grid options from ilsw
       write (iout, 1011)
       write (iout, 1012) iradan, iranwt, irangd
 
-C     Use of symmetry
-C     ===============
+C     Desired accuracy and pseudoinversion tolerance for spatial overlap
 
+      accdes = decacc (0, 0.0d0, .false.)
+      tolinv = 1.0e-6
+      write (iout, 1020) accdes, tolinv
+      
+C     Use of symmetry
 C     We currently set jsym2e = 2 in the code (users cannot change that).
 
 C       jsym2e = 2 uses integral symmetry by replicating integrals, but
@@ -238,141 +218,59 @@ C       does not force the density or Fock matrices to be symmetric.
 
       jsym2e = 0
 
-C     Load IBF array.
+C     Restore /IBF/
 
       call fileio (2, -irwibf, intowp (30), ibf, 0)
 
       if ( isym2e .eq. 0 ) jsym2e = 0
-
-
       write (iout, 1040)
 
       if ( jsym2e .eq. 2 ) write (iout, 1040)
 
-      write (iout, *)
-
-C     Read /mol/
-
-      call rwmol(2,997)
-
-C     Get 6d basis
-
-      call getnb6(nbas6d)
-
 C     Read iopcl from ILSW file.
-
 C       iopcl = 2,  complex RHF
 C             = 3,  complex UHF
 C             = 6,  complex GHF (there is no real GHF)
       
       call ilsw (2, 1, iopcl)
 
-      if ( iopcl .gt. 6 .or. iopcl .lt. 1 ) then
-         write (iout, *) 'iopcl', iopcl
-C        call gauerr ('Incorrect iopcl in cpd2e.')
-              
-      endif
+      write (iout, *) 'got iopcl = ', iopcl
+C     call gauerr ('Incorrect iopcl in cpd2e.')
+                    
+C     Read /mol/
 
+      call rwmol(2,997)
+
+C     Get 6d basis used with all quadratures
+
+      call getnb6(nbas6d)
+
+      write (iout, *)
       
-C     Get number of symmetry operations.
-C       - nop1,    order of the concise abelian subgroup
-C       - nop2,    order of the full abelian subgroup
-C       - nopuse,  actual oder to be used
+C-----------------------------------------------------------------------------+
+C     Compute the collocation matrix X(mu,G) and save it to the RWF irwfac    |
+C-----------------------------------------------------------------------------+
 
-C     %%%%%%%%%%%%%%%%%%%%%%%
-C     %  Memory allocation  %
-C     %%%%%%%%%%%%%%%%%%%%%%%
+      call frmquad (iout, iprint, iradan, iranwt, irangd, iopcl,
+     &     ngrid, irwfac, irwfact, v, lenv - jend)
 
-C     Initialize CPD2E RWF files.
+C-----------------------------------------------------------------------------+      
+C     Compute spatial overlap using collocation from irwfac                   |
+C-----------------------------------------------------------------------------+      
 
-C      call conddf (irwx, szp)
+      call frmspovinv (iout, iprint, nbas6d, ngrid, tolinv,
+     &     irwfac, irwspo, v(jend), lenv - jend)
 
-C     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-C     %  Retrieve symmetry information  %
-C     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+C-----------------------------------------------------------------------------+      
+C     Compute integrals (possibly density fitted)                             |
+C-----------------------------------------------------------------------------+
 
-      call getnop (nop1, nop2)
-      call pccki (0, junk, neqall, mxatso, nopall, natoms, nopall)
-
-      nopuse = nopall
-
-C     Memory allocation for symmetry related quantities.
-
-      lenneq = 0
-      lennes = 0
-      lenne2 = 0
-
-      if ( isym2e .eq. 1 ) then
-        lenneq = intowp (nop1*nbasis)
-        lennes = max (itqry (neqshl), 0)
-        lenne2 = max (itqry (neqsh2), 0)
-      endif
-
-      ineq   = jend
-      ineqsh = ineq   + lenneq
-      ineqs2 = ineqsh + lennes
-      jend   = ineqs2 + lenne2
-
-      mdv = lenv - jend + 1
-
-      call tstcor (jend-1, lenv, 'cpd2e')
-
-
-C     Fill arrays with symmetry related quantities.
-
-      if ( lenneq .ne. 0 ) then
-        call fileio (2, -neq, lenneq, v(ineq), 0)
-      endif
-
-      if ( lennes .ne. 0 ) then
-        call fileio (2, -neqshl, lennes, v(ineqsh), 0)
-      endif
-
-      if ( lenne2 .ne. 0 ) then
-        call fileio (2, -neqsh2, lenne2, v(ineqs2), 0)
-      endif
-
-
-C     Compute the collocation matrix X(mu,G) and save it to the RWF irwfac
+      call frm2eints (iout, iprint, jsym2e, neq, neqshl, 
+     &     neqsh2, .false., accdes, next, irw2efull, v(jend), lenv-jend)
       
-      call DecPrn(iout,iprint,iradan,0,iprune,ntheta,nphi,
-     &  mxradu,mxangu,xx) 
-      ngridmx = mxradu * mxangu * natoms
-
-      call conddf (irwfac, ngridmx*nbas6d)
-
-C     Prepare the arguments passed/received from the writing routine
-
-      lenscrwrt  = lenv / ngridmx
-      
-C     iopwrt integer array:
-C        1 - RWF to store X(mu,G)
-C        2 - total number of grid points (incremented by working routine)
-      
-      iopwrt(1) = irwfac
-      iopwrt(2) = 0
-      
-C      call NIn3Su(iout,iprint,iopcl,ParOK,ParDig,NPMax,ReadB,           
-C     &  UseBfn,UseMO,UseOcc,IUseDn,IDerBf,IDerRh,IRadAn,IRanWt,IRanGd,        
-C     &  IRType,NMO,NAtoms,NBas6D,IAn,IAtTyp,AtmChg,C,AtNetC,CMO,OccMO,
-C     &  PA,PB,HvRMax,RQMax,BfnFnc,IntBfn,WPBfn,LScrBf,MOFunc,IntMO,WPMO,
-C     &  LScrMO,DenFnc,IntDen,WPDen,LScrDn,V,MDV)
-
-      call NIn3Su(iout,iprint,iopcl,.false.,.true.,1,.true.,
-     &  .true.,.false.,.false.,0,0,0,iradan,iranwt,irangd,
-     &  2,junk,natoms,nbas6d,ian,iattyp,atmchg,c,xx,xx,xx,
-     &  xx,xx,.false.,xx,atquadwrt,iopwrt,xx,lenscrwrt,MOFunX,junk,
-     &  xx,junk,DenFnX,junk,xx,junk,v(jend),lenv-jend)
-
-C     Read back the output from the writing routine
-C     actual total number of grid points:
-      ngridu = iopwrt(2)
-      
-      write (iout, *) 'nin3su completed, npoints = ', ngridu
-
-      tolinv = 1e-6
-      call frmspovinv (iout, iprint, nbas6d, ngridu, tolinv,
-     &     irwfac, irwspo, v(jend), lenv-jend)
+C-----------------------------------------------------------------------------+      
+C     Project integrals onto the quadrature space                             |
+C-----------------------------------------------------------------------------+
 
       call chainX (0)
 

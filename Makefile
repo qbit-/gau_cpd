@@ -7,7 +7,7 @@ NUTIL=$(GAU_DIR)/util.a
 MKLPATH = /opt/intel/composerxe-2015.0.090/mkl/lib/intel64
 MKLINCLUDE = /opt/intel/composerxe-2015.0.090/mkl/include
 PROFFLAG =
-FC0 = pgf90
+FC0 = pgf77
 #FC2 = -Wl"-M /dev/null -D DUPENTRY=NOTE -D FORCE=OFF -f indef"
 
 #LAPext = /usr/lib64/libreflapack.so
@@ -38,7 +38,7 @@ bdrys.o:
 
 MAIN325 = ml325.o
 
-OBJ325 = cpd2int.o atquadwrt.o frmspovinv.o gtinct.o
+OBJ325 =  atquadwrt.o cpd2int.o gtinct.o frm2eints.o frmquad.o frmspovinv.o
 
 l325.exe: $(MAIN325) $(OBJ325) 
 	$(FC0) -g -o l325.exe $(MAIN325) $(OBJ325) $(NUTIL) \

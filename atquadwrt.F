@@ -30,8 +30,9 @@ C     Read/write the input/output array
 
       if (iprint .gt. 5) then
          call prtchi(iout,0,ngrid,nbas6d,chi,d1chi,d2chi,d3chi)
+         call outmts(iout,'weights:',0,0,weight,ngrid,1,ngrid,1)
       endif
-
+      
 C     Find how many vectors of length nbas6d we can handle in scratch
       if ( lenscr .lt. nbas6d ) call
      & gauerr ('Insufficient lenscr in atquadwrt')
@@ -46,7 +47,6 @@ C     Take sqrt of weights
       do 10 ig = 1, ngrid
          weight(ig) = dsqrt(weight(ig))
  10   continue
-
       
 C     uncompress and write X to the RWF column by column. We need to uncompress, transpose
 C     and weight Chi to form X
