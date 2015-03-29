@@ -252,7 +252,7 @@ C     Compute the collocation matrix X(mu,G) and save it to the RWF irwfac    |
 C-----------------------------------------------------------------------------+
 
       call frmquad (iout, iprint, iradan, iranwt, irangd, iopcl,
-     &     ngrid, irwfac, irwfact, v, lenv - jend)
+     & ngrid, irwfac, irwfact, v(jend), lenv - jend)
 
 C-----------------------------------------------------------------------------+      
 C     Compute spatial overlap using collocation from irwfac                   |
