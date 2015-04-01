@@ -86,6 +86,7 @@ C     debug
       logical     dbg
 
 C     contraction
+
       
 
 C     Memory allocation
@@ -260,7 +261,79 @@ C     Debug printing
 
       endif
 
-      
+C     This subroutine performs contractions of the two body integrals with the 
+C     quadrature matrices. The contraction is:
+C     
+C     E(P,Q) = sum_{i,j} sum_{k,l} X(i,P) X(j,P) (ij | kl) X(k,Q) X(l,Q) 
+C
+C     The algorithm is built to fulfill two goals: maximum utilization of RAM
+C     and the use of BLAS routines. It may not necessarily be optimal in parallel
+C     case nor require less calls to integral generation/loading code
+C
+C     Code flow:  
+C                    estimate memory requirements and sizes
+C                    
+C                    form 2e integrals in memory or on disk
+C     
+C                    for each block of kl indicies do in parallel 
+C                        for each block of P 
+C                            get (ij | kl)
+C                            sum_{j} (ij | kl) R(j,P)
+C                            L(iP | kl) = (iP | kl) * R(i,P)
+C                            F(P, kl) = sum_{i} L(iP | kl)
+C
+C                            transpose F(P,kl)
+C
+C                            for each block of Q
+C                                 sum_{l} F(P,kl) R(l,Q)
+C                                 G(P,kQ) = F(P,kQ) * R(k,Q)
+C                                 E(P,Q)  = sum_{k} F(Q,kQ)
+C                                 
+C                                 update E(P,Q) += E(P,Q)
+C
+C     
+C     
+C     Arguments:
+C     
+C     [in]  nbas6d             - number of basis functions
+C     [in]  ngrid              - number of grid points in the quadrature
+C     ----passed throught---
+C     [in]  jsym2e             - controls symmetry.           
+C     [in]  neq, neqshl, neqs2 - symmetry related RWFs from Gaussian
+C     [in]  accdes             - desired accuracy from PRISM
+C     ----------------------
+C     [in]  irwfac             - RWF with quadratures
+C     [out] irwe               - RWF with E matrices 
+C
 
+C     Arguments 
+
+      integer    iout, iprint, lenv
+      real*8     v(*)
+      
+      integer    jsym2e, neq, neqshl, neqsh2
+      real*8     accdes
+      integer    irwfac, irwe
+
+C     Pointers and sizes
+
+      integer    jend
+      integer    jwbuf, jxbufp, jxbufq, jscr, jebuf
+      integer    lenwbuf, lenxbufp, lenxbufq, lenscr, lenebuf
+
+C     other
+
+      integer    nbasis, nbsq, ngrid
+      integer    numk, numl, nump, numq
+
+C     Memory allocation
+
+      jend = 1 
+
+      call ctrmemest(iout, iprint, nbasis, ngrid, incorepos, 
+     &     numk, numl, nump, numq, lenwbuf, lenxbufp, lenxbufq,
+     &     lenscr, lenebuf, v(jend), lenv) 
+  
+      
 
       end
