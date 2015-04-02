@@ -86,6 +86,7 @@ C     debug
       logical     dbg
 
 C     contraction
+
       
 
 C     Memory allocation
@@ -238,7 +239,9 @@ C     1/2 factors which PRISM put for I != J and K != L
 
 C     save integrals
 
-      call fileio (1, -irw2efull, len2eint, v(j2eint), 0) 
+      if (.not. keep) then
+         call fileio (1, -irw2efull, len2eint, v(j2eint), 0) 
+      endif
 
 C     Debug printing
 
@@ -259,8 +262,5 @@ C     Debug printing
       enddo
 
       endif
-
-      
-
 
       end

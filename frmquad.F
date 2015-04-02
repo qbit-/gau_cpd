@@ -45,18 +45,14 @@ C     pointers
 
       integer     jend, junk
       real*8      xx
-      
-C     other 
-      
+
       integer     npmax
 
 C     functions called in quadrature routine
       
       external    atquadwrt, mofunx, denfnx 
       integer     nproc
-
-      jend = 1 
-
+      
 C     Get 6d basis used with all quadratures
 
       call getnb6(nbas6d)
@@ -71,6 +67,8 @@ C     Get the maximal number of grid points
 
 C     Prepare the arguments passed/received from the writing routine
 
+      npmax = nproc(0)
+
 C     iopwrt integer array:
 C        1 - RWF to store X(mu,G)
 C        2 - total number of grid points (incremented by working routine)
@@ -83,16 +81,14 @@ C     here we just give maximal possible length - may need adjustment in future
       
       lenscrwrt  = ngridmx*nbas6d
 
-      npmax = nproc(0)
-
       call NIn3Su(iout,iprint,iopcl,.true.,.false.,npmax,.true.,
      $  .true.,.false.,.false.,0,0,0,iradan,iranwt,irangd,
-     $  2,0,natoms,nbas6d,ian,iattyp,atmchg,c,xx,xx,xx,
+     $  2,0,natoms,nbas6d,IAn,iattyp,atmchg,c,xx,xx,xx,
      $  xx,xx,.false.,xx,atquadwrt,iopwrt,xx,lenscrwrt,MOFunX,junk,xx,
      $  0,DenFnX,junk,xx,0,v(jend),lenv)
 
-C     Read back the writing routine
-C     the actual total number of grid points:
+C     Read back the output from the writing routine
+C     actual total number of grid points:
 
       ngridu = iopwrt(2)      
       write (iout, *) 'Frmquad: nin3su completed, npoints = ', ngridu
