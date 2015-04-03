@@ -38,7 +38,7 @@ bdrys.o:
 
 MAIN325 = ml325.o
 
-OBJ325 =  atquadwrt.o cpd2int.o gtinct.o frm2eints.o frmquad.o frmspovinv.o
+OBJ325 =  atquadwrt.o cpd2int.o ctrmemest.o gtinct.o frm2eints.o frmemt.o  frmquad.o frmspovinv.o
 
 l325.exe: $(MAIN325) $(OBJ325) 
 	$(FC0) -g -o l325.exe $(MAIN325) $(OBJ325) $(NUTIL) \

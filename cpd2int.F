@@ -260,17 +260,14 @@ C-----------------------------------------------------------------------------+
 
       call frmspovinv (iout, iprint, nbas6d, ngrid, tolinv,
      &     irwfac, irwspo, v(jend), lenv - jend)
-
-C-----------------------------------------------------------------------------+      
-C     Compute integrals (possibly density fitted)                             |
-C-----------------------------------------------------------------------------+
-
-      call frm2eints (iout, iprint, jsym2e, neq, neqshl, 
-     &     neqsh2, .false., accdes, next, irw2efull, v(jend), lenv-jend)
       
 C-----------------------------------------------------------------------------+      
 C     Project integrals onto the quadrature space                             |
 C-----------------------------------------------------------------------------+
+
+      call frmemt(iout, iprint, nbas6d, ngrid, jsym2e, neq,
+     &     neqshl, neqsh2, accdes, irwfac, irwe, v(jend), lenv)
+
 
       call chainX (0)
 
