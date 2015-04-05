@@ -1,6 +1,6 @@
       subroutine ctrmemest(iout, iprint, nbasis, ngrid, incorepos, 
-     &     numk, numl, nump, numq, lenwbuf, lenxbufp, lenxbufq,
-     &     lenscr, v, lenv) 
+     &     numk, numl, nump, numq, lenwbuf, lenfbuf, lenxbufp, lenxbufq,
+     &     lenscr, lenebuf, v, lenv) 
 
       implicit none 
 
@@ -13,12 +13,14 @@ C     [in] ngrid  - number of grid points in the quadrature
 C     [out] incorepos - if fully in-core operation is possible
 C     [out] numk - step size over the K index of integrals - slowest dimension
 C     [out] numl - step size over the L index of integrals - 2nd slowest dimension
-C     [out] nump - step size over the right quadrature projection
-C     [out] numq - step size over the left quadrature projection
-C     [out] lenwbuf - length of the main working buffer 
+C     [out] nump - step size over the right quadrature grid index
+C     [out] numq - step size over the left quadrature grid index
+C     [out] lenwbuf - length of the integral buffer 
+C     [out] lenfbuf - length of the left projected kl integrals
 C     [out] lenxbufp - length of the buffer for right quadratures
 C     [out] lenxbufq - length of the buffer for left quadratures
 C     [out] lenscr   - scratch space length
+C     [out] lenebuf  - space for final E buffer - right and left projected integrals
 C     [in]  lenv     - available memory
 
 
@@ -31,7 +33,7 @@ C     Arguments
       integer    nbasis, ngrid
       integer    numk, numl, nump, numq
 
-      integer    lenwbuf, lenxbufp, lenxbufq, lenscr
+      integer    lenwbuf, lenfbuf, lenxbufp, lenxbufq, lenebuf, lenscr
       logical    incorepos
 
 C     Other
@@ -47,7 +49,7 @@ C     functions
       npmax = nproc(0) 
 
 C     We make a crude estimation if intergrals can be kept in memory
-      if ((lenv - nbsq*nbsq - nbasis*nbsq - nbsq*npmax - 2*nbsq) .gt. 0)
+      if ((lenv - nbsq*nbsq - nbasis*nbsq - 3*nbsq - npmax*nbsq) .gt. 0)
      &  then
          incorepos = .true.
          res = lenv - nbsq*nbsq
@@ -56,51 +58,36 @@ C     We make a crude estimation if intergrals can be kept in memory
          res = lenv
       endif
 
-C     try to allocate space for as much kl indices as possible, keeping a minimal space for 
-C     scratch 
+C     Just set fixed valus in a dumb way for now
 
-      numkl = (res - npmax*nbsq - 2*nbsq) / nbsq
-      if (numkl .gt. nbsq) numkl = nbsq
-      if (numkl .lt. 1) 
-     & call gauerr('Insufficient memory in ctrmemest:1')
-      
-      numk = numkl / nbasis
-      if (numk .lt. 1) then 
-         numl  = mod (numkl, nbasis) 
-         numk  = 1
-      else
-         numl  = nbasis
-      endif
+      nump = nbasis
+      numq = nbasis
+      pqmax = max(nump, numq)
 
-      res = res - nbsq*numk*numl
+      res = lenv - nump*nbasis*(npmax + 1) - numq*nbasis*(npmax + 1) 
+     &     - nump*numq
 
-C     Done with main working buffer. Now try to maximize auxiliarry buffers
-C     right quadrature array
+      if (res .lt. 0)
+     &     call gauerr('Insufficient memory in ctrmemest:1')
 
-      nump = (res - nbsq) / ( nbasis * (npmax + 1) )
-      if (nump .gt. numk*numl) nump = numk*numl
-      if (nump .gt. nbasis)  nump = nbasis
-     
-      res = res - nump*nbasis*( npmax + 1 )
-      if (res .lt. nbsq)
+      numkl = res / (nbsq + nump)
+      if (numkl .lt. 1)
      &     call gauerr('Insufficient memory in ctrmemest:2')
 
-C     left quadrature array
-      
-      numq = ( res + nump*npmax*nbasis ) / (nbasis*(npmax + 1))
-      if (numq .gt. nbsq/numk) numq = nbsq/numk
-      
-      pqmax = max(nump,numq)
-      res = res + nump*nbasis*npmax - pqmax*nbasis*npmax - numq*nbasis
-      
-      if (res .lt. 0)
-     &     call gauerr('Insufficient memory in ctrmemest:3')
+      numl  = numkl / nbasis
+      if (numl .lt. 1) then 
+         numk = mod(numkl, nbasis)
+      else
+         numk = nbasis
+      endif
 
 C     Now assign all sizes
 
-      lenwbuf  = numk*numl*nbsq
-      lenxbufp = nump*nbasis
-      lenxbufq = numq*nbasis
-      lenscr   = pqmax*nbasis
+      lenwbuf   = (numk + numl*nbasis)*nbsq
+      lenfbuf   = (numk + numl*nbasis)*nump
+      lenxbufp  = nump*nbasis
+      lenxbufq  = numq*nbasis
+      lenscr    = pqmax*nbasis*npmax
+      lenebuf   = nump*numq
 
       end

@@ -60,16 +60,16 @@ C     Arguments
 C     Pointers and sizes
 
       integer    jend, next
-      integer    jwbuf, jxbufp, jxbufq, jscr, jebuf
-      integer    lenwbuf, lenxbufp, lenxbufq, lenscr, lenebuf
+      integer    j2eint, jwbuf, jfbuf, jxbufp, jxbufq, jscr, jebuf
+      integer    lenwbuf, lenfbuf, lenxbufp, lenxbufq, lenscr, lenebuf
 
 C     other
 
       integer    nbasis, nbsq, ngrid
       integer    numk, numl, nump, numq
-      integer    jnumk, jnuml, jnump, jnumq
+      integer    jnuml, jnumk, jnump, jnumq
       integer    jk, jl, jp, jq 
-      integer    ikl
+      integer    jkl, jklx 
 
       logical    incorepos
 
@@ -83,8 +83,8 @@ C     functions
       nbsq = nbasis*nbasis
 
       call ctrmemest(iout, iprint, nbasis, ngrid, incorepos, 
-     &     numk, numl, nump, numq, lenwbuf, lenxbufp, lenxbufq,
-     &     lenscr, v(jend), lenv) 
+     &     numk, numl, nump, numq, lenwbuf, lenfbuf, lenxbufp, lenxbufq,
+     &     lenscr, lenebuf, v(jend), lenv) 
         
 C---------------------------------------------------+      
 C     Compute integrals                             |
@@ -96,58 +96,45 @@ C---------------------------------------------------+
      &     neqsh2, incorepos, accdes, next, irw2efull, v(jend),
      & lenv-jend)
 
+      if (incorepos) j2eint = jend
       jend = next
 
 C     Memory allocation
       
       jwbuf  = jend
-      jxbufp = jwbuf  + lenwbuf
+      jfbuf  = jwbuf  + lenwbuf
+      jxbufp = jfbuf  + lenfbuf
       jxbufq = jxbufp + lenxbufp
       jscr   = jxbufq + lenxbufq
-      jend   = jscr   + lenscr
+      jebuf  = jscr   + lenscr
+      jend   = jebuf  + lenebuf
       
       call tstcor (jend-1, lenv, 'frmemt: memory allocation')
 
-      do 100 jk = 1, nbasis, numk
-       jnumk = numk
-       if (jk + numk - 1 .gt. nbasis) then
-        jnumk = nbasis - jk*numk
-       endif
-
-       do 200 jl = 1, nbasis, numl
-        jnuml = numl
-        if (jl + numl - 1 .gt. nbasis) then
-         jnuml = nbasis - jl*numl
-        endif
-            
-        do 300 jp = 1, ngrid, nump
-         jnump = nup
-         if (jp + nup - 1 .gt. ngrid) then
-          jnump = ngrid - jp*nump
-         endif
-
-         do 400 jq = 1, ngrid, numq
-          jnumq = numq
-          if (jq + numq - 1 .gt. ngrid) then
-           jnumq = ngrid - jq*numq
-          endif
-            
-C            call getklblock (iout, iprint, v(jend), lenv)
-C            call getxblock ()
-
-          do 500 icol = 1, jnumk*jnuml
-                          
- 500      continue
-
-C            call transpose() 
-C            call getxblock ()
-
-          do 600 icol = 1, jnump
-
- 600      continue
- 400     continue
- 300    continue
- 200   continue
+      jkl = 1
  100  continue
+
+C     Ugly stepsize computation. We try to load by whole counts 
+C     of L index, e.g. nbasis*nbsq
+
+        jklx = jkl + (numk + numl*nbasis)    
+        if (jklx / nbasis .gt. jkl / nbasis) then
+           if (jklx .gt. nbsq) then
+              jnuml = (nbsq - jkl) / nbasis
+              jnumk = mod((nbsq - jkl), nbasis)
+           else
+              jnuml = (jklx - jkl) / nbasis
+              jnumk = mod((jklx - jkl), nbasis)
+           endif
+        endif
+        jl = jkl / nbasis + 1
+        jk = mod(jkl, nbasis) + 1
+        
+        call gtklblock (iout, iprint, jk, jl, jnumk, jnuml, 
+     &       incorepos, v(jwbuf), v(j2eint), irw2efull, v(jend), lenv)
+        
+        
+        jkl = jklx
+        if (jkl .lt. nbsq) goto 100
 
       end
