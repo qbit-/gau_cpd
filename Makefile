@@ -28,17 +28,12 @@ LAPext = -L$(MKLPATH) -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread
 all: l325.exe
 	gdv run/test.gjf && tail -40 run/test.log
 
-bdrys.o:
-	gau-get bdrys utilam
-	make -f $(GAU_DIR)/bsd/gdv.make MAKE='$(MAKE)' \
-	PROFFLAG='$(PROFFLAG)' $*.o
-	rm -f bdrys.F
-
 # = link 325 =
 
 MAIN325 = ml325.o
 
-OBJ325 =  atquadwrt.o cpd2int.o ctrmemest.o gtinct.o frm2eints.o frmemt.o  frmquad.o frmspovinv.o
+OBJ325 =  asum.o atquadwrt.o cpd2int.o ctrmemest.o frm2eints.o frmemt.o  frmquad.o frmspovinv.o \
+	  updemt.o
 
 l325.exe: $(MAIN325) $(OBJ325) 
 	$(FC0) -g -o l325.exe $(MAIN325) $(OBJ325) $(NUTIL) \

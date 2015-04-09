@@ -67,9 +67,12 @@ C     other
 
       integer    nbasis, nbsq, ngrid
       integer    numk, numl, nump, numq
-      integer    jnuml, jnumk, jnump, jnumq
+      integer    jnuml, jnumk, jnump, jnumq, jnumkl
       integer    jk, jl, jp, jq 
       integer    jkl, jklx 
+
+      integer    ikl, ip, iq, ij
+      integer    ioff, ldlen
 
       logical    incorepos
 
@@ -78,6 +81,8 @@ C     other
 C     functions
       
       integer    igetrw
+      real*8     asum
+
 
       jend = 1 
       nbsq = nbasis*nbasis
@@ -111,6 +116,11 @@ C     Memory allocation
       
       call tstcor (jend-1, lenv, 'frmemt: memory allocation')
 
+C     Allocate RWF for the E matrix
+      
+      call conddf (irwe, ngrid*ngrid)
+
+C     Top of the contraction loop
       jkl = 1
  100  continue
 
@@ -129,12 +139,94 @@ C     of L index, e.g. nbasis*nbsq
         endif
         jl = jkl / nbasis + 1
         jk = mod(jkl, nbasis) + 1
-        
-        call gtklblock (iout, iprint, jk, jl, jnumk, jnuml, 
-     &       incorepos, v(jwbuf), v(j2eint), irw2efull, v(jend), lenv)
-        
-        
+        jnumkl = numk + numl*nbasis
+
+C     Load KL block from memory or file 
+
+        ioff  = (jk-1)*nbsq + (jl-1)*nbasis*nbsq
+        ldlen = numk*nbsq + numl*nbsq*nbasis
+
+        if (incorepos) then
+           call amove (ldlen, v(j2eint+ioff), v(jwbuf))
+        else
+           call fileio(2,-irw2efull,ldlen,v(jwbuf),ioff )
+        endif
+
+C     Loop over left quadrature
+
+        do 200 jp = 1, ngrid, nump
+           if (jp + nump .gt. ngrid) then
+              jnump = ngrid - jp
+           else
+              jnump = nump
+           endif
+           
+C     Load letf quadrature block from file
+
+           ioff  = (jp-1)*nbasis
+           ldlen = jnump*nbasis 
+           
+           call fileio(2,-irwfac,ldlen,v(jxbufp),ioff)
+C
+C     Do F(kl, P) = sum_{i,j} X(i,P) X(j,P) (i,j| kl)
+C 
+           do 210 ikl = 1, jnumkl
+              call dgemm ('n', 'n', nbasis, jnump, nbasis, 1.0d0,
+     & v(jwbuf + (ikl-1)*nbsq), nbasis, v(jxbufp), nbasis, 0.0d0,
+     & v(jscr), nbasis)
+
+              do 215 ij = 1, nbsq
+                 v(jscr + ij - 1) = v(jscr + ij - 1)*v(jxbufp + ij - 1)
+ 215       continue
+
+              do 220 ip = 1, jnump 
+                 v(jfbuf + (ikl-1) + (ip-1)*nbasis) = asum (nbasis,
+     & v(jscr + (ip-1)*nbasis), 1)
+ 220          continue
+
+ 210       continue
+           
+           do 300 jq = 1, ngrid, numq
+              if (jq + numq .gt. ngrid) then
+                 jnumq = ngrid - jq
+              else
+                 jnumq = numq
+              endif
+              
+C     Load right quadrature from file 
+
+              ioff  = (jq-1)*nbasis
+              ldlen = jnumq*nbasis 
+              
+              call fileio(2,-irwfac,ldlen,v(jxbufq),ioff)
+C     
+C     Do E(Q, P) = sum_{k,l} X(k, Q) X(l, Q) F(kl, P) and transpose it
+C     
+C     HERE WE NEED SUBMATRIX OF X in jxbufq . WILL FAIL IF L=1, K<NBASIS
+              do 310 ip = 1, jnump
+               call dgemm ('n', 'n', jnumk, jnumq, jnuml, 1.0d0,  
+     & v(jfbuf + (ip-1)*jnumkl), jnumkl, v(jxbufq + jk-1),nbasis, 0.0d0, 
+     & v(jscr), jnumk)
+               do 320 iq = 1, jnumq
+
+                  do 325 ij = 1, jnumk
+                     v(jscr + (iq-1)*jnumk + ij-1) =
+     & v(jscr + (iq-1)*jnumk + ij-1)*v(jxbufq+jk-1+(iq-1)*nbasis+ij-1)
+ 325              continue
+
+                  v(jebuf + (ip-1) + (iq-1)*jnump) = asum (jnumk, 
+     & v(jscr + (iq-1)*jnumk), 1)
+
+ 320           continue
+ 310          continue
+
+              call updemt (iout, iprint, ngrid, jp, jnump, jq, jnumq, 
+     &             v(jebuf), irwe, v(jend), lenv)
+ 300       continue
+ 200  continue
+
         jkl = jklx
         if (jkl .lt. nbsq) goto 100
+C     end of the contraction loop
 
       end
