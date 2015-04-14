@@ -53,6 +53,8 @@ C     functions called in quadrature routine
       external    atquadwrt, mofunx, denfnx 
       integer     nproc
       
+      jend = 1
+
 C     Get 6d basis used with all quadratures
 
       call getnb6(nbas6d)

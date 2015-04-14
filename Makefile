@@ -6,7 +6,7 @@ NUTIL=$(GAU_DIR)/util.a
 
 MKLPATH = /opt/intel/composerxe-2015.0.090/mkl/lib/intel64
 MKLINCLUDE = /opt/intel/composerxe-2015.0.090/mkl/include
-PROFFLAG =
+PROFFLAG = -O0
 FC0 = pgf77
 #FC2 = -Wl"-M /dev/null -D DUPENTRY=NOTE -D FORCE=OFF -f indef"
 

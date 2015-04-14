@@ -66,8 +66,8 @@ C     Pointers and sizes
 C     other
 
       integer    nbasis, nbsq, ngrid
-      integer    numk, numl, nump, numq
-      integer    jnuml, jnumk, jnump, jnumq, jnumkl
+      integer    numkl, nump, numq
+      integer    jnumkl, jnuml, jnumk, jnump, jnumq
       integer    jk, jl, jp, jq 
       integer    jkl, jklx 
 
@@ -88,9 +88,9 @@ C     functions
       nbsq = nbasis*nbasis
 
       call ctrmemest(iout, iprint, nbasis, ngrid, incorepos, 
-     &     numk, numl, nump, numq, lenwbuf, lenfbuf, lenxbufp, lenxbufq,
+     &     numkl, nump, numq, lenwbuf, lenfbuf, lenxbufp, lenxbufq,
      &     lenscr, lenebuf, v(jend), lenv) 
-        
+
 C---------------------------------------------------+      
 C     Compute integrals                             |
 C---------------------------------------------------+
@@ -101,9 +101,11 @@ C---------------------------------------------------+
      &     neqsh2, incorepos, accdes, next, irw2efull, v(jend),
      & lenv-jend)
 
-      if (incorepos) j2eint = jend
-      jend = next
-
+      if (incorepos) then
+         j2eint = jend
+         jend = next
+      endif
+      
 C     Memory allocation
       
       jwbuf  = jend
@@ -113,7 +115,8 @@ C     Memory allocation
       jscr   = jxbufq + lenxbufq
       jebuf  = jscr   + lenscr
       jend   = jebuf  + lenebuf
-      
+
+      write (iout, *) 'blah from frmemt'
       call tstcor (jend-1, lenv, 'frmemt: memory allocation')
 
 C     Allocate RWF for the E matrix
@@ -121,30 +124,35 @@ C     Allocate RWF for the E matrix
       call conddf (irwe, ngrid*ngrid)
 
 C     Top of the contraction loop
-      jkl = 1
+      jkl = 0
+      jk  = 0
+      jl  = 0
  100  continue
 
-C     Ugly stepsize computation. We try to load by whole counts 
-C     of L index, e.g. nbasis*nbsq
-
-        jklx = jkl + (numk + numl*nbasis)    
-        if (jklx / nbasis .gt. jkl / nbasis) then
-           if (jklx .gt. nbsq) then
-              jnuml = (nbsq - jkl) / nbasis
-              jnumk = mod((nbsq - jkl), nbasis)
-           else
-              jnuml = (jklx - jkl) / nbasis
-              jnumk = mod((jklx - jkl), nbasis)
-           endif
+C     Ugly stepsize computation. We always round to whole counts 
+C     of L index if possible
+      
+        if (jkl + numkl .gt. nbsq) then
+           jnumkl = (nbsq - jkl)
+        else
+           jnumkl = numkl
         endif
-        jl = jkl / nbasis + 1
-        jk = mod(jkl, nbasis) + 1
-        jnumkl = numk + numl*nbasis
+        
+        jnuml = jnumkl / nbasis
+        jnumk = mod(jnumkl, nbasis)
 
+        if (jnuml .ne. 0) then
+           jnumk  = nbasis
+           jnumkl = jnuml*nbasis
+        else
+           jnuml  = 1
+           jnumkl = jnumk
+        endif
+        
 C     Load KL block from memory or file 
 
-        ioff  = (jk-1)*nbsq + (jl-1)*nbasis*nbsq
-        ldlen = numk*nbsq + numl*nbsq*nbasis
+        ioff  = jkl*nbsq 
+        ldlen = jnumkl*nbsq
 
         if (incorepos) then
            call amove (ldlen, v(j2eint+ioff), v(jwbuf))
@@ -154,7 +162,7 @@ C     Load KL block from memory or file
 
 C     Loop over left quadrature
 
-        do 200 jp = 1, ngrid, nump
+        do 200 jp = 0, ngrid - 1, nump
            if (jp + nump .gt. ngrid) then
               jnump = ngrid - jp
            else
@@ -163,30 +171,30 @@ C     Loop over left quadrature
            
 C     Load letf quadrature block from file
 
-           ioff  = (jp-1)*nbasis
+           ioff  = jp*nbasis
            ldlen = jnump*nbasis 
            
            call fileio(2,-irwfac,ldlen,v(jxbufp),ioff)
 C
 C     Do F(kl, P) = sum_{i,j} X(i,P) X(j,P) (i,j| kl)
 C 
-           do 210 ikl = 1, jnumkl
+           do 210 ikl = 0, jnumkl - 1
               call dgemm ('n', 'n', nbasis, jnump, nbasis, 1.0d0,
-     & v(jwbuf + (ikl-1)*nbsq), nbasis, v(jxbufp), nbasis, 0.0d0,
+     & v(jwbuf + ikl*nbsq), nbasis, v(jxbufp), nbasis, 0.0d0,
      & v(jscr), nbasis)
 
-              do 215 ij = 1, nbsq
-                 v(jscr + ij - 1) = v(jscr + ij - 1)*v(jxbufp + ij - 1)
+              do 215 ij = 0, jnump*nbasis - 1 
+                 v(jscr + ij) = v(jscr + ij)*v(jxbufp + ij)
  215       continue
 
-              do 220 ip = 1, jnump 
-                 v(jfbuf + (ikl-1) + (ip-1)*nbasis) = asum (nbasis,
-     & v(jscr + (ip-1)*nbasis), 1)
+              do 220 ip = 0, jnump - 1 
+                 v(jfbuf + ikl + ip*jnumkl) = asum (nbasis,
+     & v(jscr + ip*nbasis), 1)
  220          continue
 
  210       continue
            
-           do 300 jq = 1, ngrid, numq
+           do 300 jq = 0, ngrid - 1, numq
               if (jq + numq .gt. ngrid) then
                  jnumq = ngrid - jq
               else
@@ -195,7 +203,7 @@ C
               
 C     Load right quadrature from file 
 
-              ioff  = (jq-1)*nbasis
+              ioff  = jq*nbasis
               ldlen = jnumq*nbasis 
               
               call fileio(2,-irwfac,ldlen,v(jxbufq),ioff)
@@ -203,30 +211,33 @@ C
 C     Do E(Q, P) = sum_{k,l} X(k, Q) X(l, Q) F(kl, P) and transpose it
 C     
 C     HERE WE NEED SUBMATRIX OF X in jxbufq . WILL FAIL IF L=1, K<NBASIS
-              do 310 ip = 1, jnump
+              do 310 ip = 0, jnump - 1
                call dgemm ('n', 'n', jnumk, jnumq, jnuml, 1.0d0,  
-     & v(jfbuf + (ip-1)*jnumkl), jnumkl, v(jxbufq + jk-1),nbasis, 0.0d0, 
+     & v(jfbuf + ip*jnumkl), jnumk, v(jxbufq + jl), nbasis, 0.0d0, 
      & v(jscr), jnumk)
-               do 320 iq = 1, jnumq
+               do 320 iq = 0, jnumq - 1
 
-                  do 325 ij = 1, jnumk
-                     v(jscr + (iq-1)*jnumk + ij-1) =
-     & v(jscr + (iq-1)*jnumk + ij-1)*v(jxbufq+jk-1+(iq-1)*nbasis+ij-1)
+                  do 325 ij = 0, jnumk - 1
+                     v(jscr + ij + iq*jnumk) =
+     & v(jscr + ij + iq*jnumk)*v(jxbufq + jk + iq*nbasis + ij)
  325              continue
 
-                  v(jebuf + (ip-1) + (iq-1)*jnump) = asum (jnumk, 
-     & v(jscr + (iq-1)*jnumk), 1)
+                  v(jebuf + ip + iq*jnump) = asum (jnumk, 
+     & v(jscr + iq*jnumk), 1)
 
  320           continue
  310          continue
-
+              
               call updemt (iout, iprint, ngrid, jp, jnump, jq, jnumq, 
      &             v(jebuf), irwe, v(jend), lenv)
  300       continue
- 200  continue
+ 200    continue
 
-        jkl = jklx
-        if (jkl .lt. nbsq) goto 100
+        jk = mod(jk + jnumk, nbasis)
+        jl = mod(jl + jnumkl/nbasis, nbasis)
+      
+        jkl = jkl + jnumkl
+        if (jkl .lt. nbsq - 1) goto 100
 C     end of the contraction loop
 
       end
