@@ -95,8 +95,7 @@ C     general options variables
       
 C     memory allocation variables
 
-      integer     jend, lenv, next, junk
-      integer     j2eint, len2eint
+      integer     jend, lenv
       
 C     other variables
 
@@ -106,10 +105,10 @@ C     other variables
 
 C     CPD2E RWF files
 
-      integer     irwfac, irwfact, irwspo, irwz, irwe, irw2efull
+      integer     irwfac, irwfact, irwspo, irwz, irwe
 
       parameter   ( irwfac = 824, irwfact = 825, irwspo = 826 )
-      parameter   ( irwz = 827, irwe = 828, irw2efull = 830 )
+      parameter   ( irwe = 827, irwz = 828)
 
 C     Gaussian RWF files
 C       - irwgen - general array (see Link 1 for details)
@@ -142,6 +141,8 @@ C     functions called
       real*8      decacc
       integer     intowp
 
+      integer     dims(4)
+      logical     dbg
 C     format statements
 
  1001 format (' CPD2E was invoked with the following options:')
@@ -266,9 +267,31 @@ C     Project integrals onto the quadrature space                             |
 C-----------------------------------------------------------------------------+
 
       call frmemt(iout, iprint, nbas6d, ngrid, jsym2e, neq,
-     &     neqshl, neqsh2, accdes, irwfac, irwe, v(jend), lenv)
+     &     neqshl, neqsh2, accdes, irwfac, irwe, v(jend), lenv - jend)
 
+C-----------------------------------------------------------------------------+
+C     Contract projected integrals with the spatial overlap                   |
+C-----------------------------------------------------------------------------+
 
+      call frmz(iout, iprint, ngrid, irwspo, irwe, irwz, v(jend), lenv
+     & - jend) 
+
+      dbg = .true. 
+      if (dbg) then
+         call fileio(2,-irwe,ngrid*ngrid,v(jend),0)
+         dims(1) = ngrid
+         dims(2) = ngrid
+         call outoctfmt(iout, 'e.mat', 'e', 2, dims, v(jend))
+         
+         call fileio(2,-irwz,ngrid*ngrid,v(jend),0)
+         call outoctfmt(iout, 'z.mat', 'z', 2, dims, v(jend))
+         
+         call fileio(2,-irwfac,nbasis*ngrid,v(jend),0)
+         dims(1) = nbasis
+         dims(2) = ngrid
+         call outoctfmt(iout, 'x.mat', 'x', 2, dims, v(jend))
+      endif
+      
       call chainX (0)
 
       return

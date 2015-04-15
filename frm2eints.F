@@ -115,7 +115,7 @@ C     allocate memory for integrals. For an easy setup for PRISM see l906
 
 C     Initialize RWF for integrals
 
-      call conddf (irw2efull, nbsq*nbsq)
+      if (.not. keep) call conddf (irw2efull, nbsq*nbsq)
 
 C     Retrieve symmetry information for PRISM (symmetry is ignored for now)
       
@@ -239,9 +239,8 @@ C     1/2 factors which PRISM put for I != J and K != L
 
 C     save integrals
 
-      if (.not. keep) then
-         call fileio (1, -irw2efull, len2eint, v(j2eint), 0) 
-      endif
+        if (.not. keep) call fileio (1, -irw2efull, len2eint,
+     &   v(j2eint), 0) 
 
 C     Debug printing
 

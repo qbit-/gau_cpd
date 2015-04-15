@@ -22,8 +22,6 @@ C     [out] lenscr   - scratch space length
 C     [out] lenebuf  - space for final E buffer - right and left projected integrals
 C     [in]  lenv     - available memory
 
-
-
 C     Arguments
 
       integer    iout, iprint, lenv

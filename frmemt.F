@@ -74,10 +74,11 @@ C     other
       integer    ikl, ip, iq, ij
       integer    ioff, ldlen
 
-      logical    incorepos
+      logical    incorepos, dbg
 
       integer    irw2efull
       integer    dims(4)
+      
 C     functions
       
       integer    igetrw
@@ -239,23 +240,14 @@ C     HERE WE NEED SUBMATRIX OF X in jxbufq . WILL FAIL IF L=1, K<NBASIS
         if (jkl .lt. nbsq - 1) goto 100
 C     end of the contraction loop
 
-        call fileio(2,-irwe,ngrid*ngrid,v(jend),0)
+        dbg = .true.
+        if (dbg .and. incorepos) then
+           dims(1) = nbasis
+           dims(2) = nbasis
+           dims(3) = nbasis
+           dims(4) = nbasis
+           call outoctfmt(iout, 'ints.mat', 'ints', 4, dims, v(j2eint))
+        endif
         
-        call fileio(2,-irwfac,nbasis*ngrid,v(jend),0)
-        dims(1) = nbasis
-        dims(2) = ngrid
-        call outoctfmt(iout, 'x.mat', 'x', 2, dims, v(jend))
-        
-        dims(1) = nbasis
-        dims(2) = nbasis
-        dims(3) = nbasis
-        dims(4) = nbasis
-        call outoctfmt(iout, 'ints.mat', 'ints', 4, dims, v(j2eint))
-        
-        call fileio(2,-irwe,ngrid*ngrid,v(jend),0)
-        dims(1) = ngrid
-        dims(2) = ngrid
-        call outoctfmt(iout, 'e.mat', 'e', 2, dims, v(jend))
-
         end
       
