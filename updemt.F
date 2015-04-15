@@ -23,9 +23,9 @@ C     other
       call tstcor (jend-1, lenv)
 
       do 100 iq = 0, numq - 1
-         ioff = p + q*ngrid
+         ioff = p + (q + iq)*ngrid
          call fileio (2, -irwe, nump, v(jscr), ioff)
-         call daxpy (nump, 1.0d0, ebuf(1,iq), 1, v(jscr), 1)
+         call daxpy (nump, 1.0d0, ebuf(1,iq+1), 1, v(jscr), 1)
          call fileio (1, -irwe, nump, v(jscr), ioff)
  100  continue
 

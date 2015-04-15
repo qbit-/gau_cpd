@@ -77,7 +77,7 @@ C     other
       logical    incorepos
 
       integer    irw2efull
-
+      integer    dims(4)
 C     functions
       
       integer    igetrw
@@ -139,8 +139,6 @@ C     of L index if possible
         endif
         
         jnuml = jnumkl / nbasis
-        jnumk = mod(jnumkl, nbasis)
-
         if (jnuml .ne. 0) then
            jnumk  = nbasis
            jnumkl = jnuml*nbasis
@@ -155,7 +153,8 @@ C     Load KL block from memory or file
         ldlen = jnumkl*nbsq
 
         if (incorepos) then
-           call amove (ldlen, v(j2eint+ioff), v(jwbuf))
+C           call amove (ldlen, v(j2eint+ioff), v(jwbuf))
+           jwbuf = j2eint + ioff
         else
            call fileio(2,-irw2efull,ldlen,v(jwbuf),ioff )
         endif
@@ -222,22 +221,41 @@ C     HERE WE NEED SUBMATRIX OF X in jxbufq . WILL FAIL IF L=1, K<NBASIS
      & v(jscr + ij + iq*jnumk)*v(jxbufq + jk + iq*nbasis + ij)
  325              continue
 
-                  v(jebuf + ip + iq*jnump) = asum (jnumk, 
-     & v(jscr + iq*jnumk), 1)
-
+                  v(jebuf + ip + iq*jnump) =
+     &                 asum (jnumk, v(jscr + iq*jnumk), 1)
+                  
  320           continue
- 310          continue
-              
-              call updemt (iout, iprint, ngrid, jp, jnump, jq, jnumq, 
+ 310        continue
+            
+            call updemt (iout, iprint, ngrid, jp, jnump, jq, jnumq, 
      &             v(jebuf), irwe, v(jend), lenv)
  300       continue
  200    continue
 
         jk = mod(jk + jnumk, nbasis)
         jl = mod(jl + jnumkl/nbasis, nbasis)
-      
+        
         jkl = jkl + jnumkl
         if (jkl .lt. nbsq - 1) goto 100
 C     end of the contraction loop
 
-      end
+        call fileio(2,-irwe,ngrid*ngrid,v(jend),0)
+        
+        call fileio(2,-irwfac,nbasis*ngrid,v(jend),0)
+        dims(1) = nbasis
+        dims(2) = ngrid
+        call outoctfmt(iout, 'x.mat', 'x', 2, dims, v(jend))
+        
+        dims(1) = nbasis
+        dims(2) = nbasis
+        dims(3) = nbasis
+        dims(4) = nbasis
+        call outoctfmt(iout, 'ints.mat', 'ints', 4, dims, v(j2eint))
+        
+        call fileio(2,-irwe,ngrid*ngrid,v(jend),0)
+        dims(1) = ngrid
+        dims(2) = ngrid
+        call outoctfmt(iout, 'e.mat', 'e', 2, dims, v(jend))
+
+        end
+      

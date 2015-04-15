@@ -61,8 +61,8 @@ C     We make a crude estimation if intergrals can be kept in memory
 
 C     Just set fixed values in a dumb way for now
 
-      nump = nbasis
-      numq = nbasis
+      nump = ngrid
+      numq = ngrid
       pqmax = max(nump, numq)
 
       res = lenv - nump*nbasis*(npmax + 1) - numq*nbasis*(npmax + 1) 
@@ -77,8 +77,6 @@ C     Just set fixed values in a dumb way for now
      &     call gauerr('Insufficient memory in ctrmemest:3')
 
       numl  = numkl / nbasis
-      numk = mod(numkl, nbasis)
-
       if (numl .ne. 0) then
          numk  = nbasis
          numkl = numl*nbasis
