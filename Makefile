@@ -8,6 +8,7 @@ MKLPATH = /opt/intel/composerxe-2015.0.090/mkl/lib/intel64
 MKLINCLUDE = /opt/intel/composerxe-2015.0.090/mkl/include
 PROFFLAG = -O0
 FC0 = pgf77
+#FC0 = pgf90 -Wl,-z,muldefs
 #FC2 = -Wl"-M /dev/null -D DUPENTRY=NOTE -D FORCE=OFF -f indef"
 
 #LAPext = /usr/lib64/libreflapack.so

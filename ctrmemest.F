@@ -35,7 +35,6 @@ C     Arguments
 
 C     Other
 
-      integer    numk, numl
       integer    nbsq, npmax, res, pqmax
 
 C     functions 
@@ -73,16 +72,9 @@ C     Just set fixed values in a dumb way for now
       if (numkl .gt. nbsq) numkl = nbsq
       if (numkl .lt. 1)
      &     call gauerr('Insufficient memory in ctrmemest:3')
+      if (numkl .lt. nbasis)
+     &     call gauerr('N^2 algorithm NYI')
 
-      numl  = numkl / nbasis
-      if (numl .ne. 0) then
-         numk  = nbasis
-         numkl = numl*nbasis
-      else
-         numl  = 1
-         numkl = numk
-      endif
-      
 C     Now assign all sizes
 
       lenwbuf = numkl*nbsq

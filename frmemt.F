@@ -71,7 +71,7 @@ C     other
       integer    jk, jl, jp, jq 
       integer    jkl, jklx 
 
-      integer    ikl, ip, iq, ij
+      integer    ikl, ip, iq, ik, il, ij
       integer    ioff, ldlen
 
       logical    incorepos, dbg
@@ -82,7 +82,7 @@ C     other
 C     functions
       
       integer    igetrw
-      real*8     asum
+      real*8     ddot, dsdot
 
 
       jend = 1 
@@ -145,7 +145,7 @@ C     of L index if possible
            jnumkl = jnuml*nbasis
         else
            jnuml  = 1
-           jnumkl = jnumk
+           jnumk  = jnumkl
         endif
         
 C     Load KL block from memory or file 
@@ -183,13 +183,9 @@ C
      & v(jwbuf + ikl*nbsq), nbasis, v(jxbufp), nbasis, 0.0d0,
      & v(jscr), nbasis)
 
-              do 215 ij = 0, jnump*nbasis - 1 
-                 v(jscr + ij) = v(jscr + ij)*v(jxbufp + ij)
- 215       continue
-
               do 220 ip = 0, jnump - 1 
-                 v(jfbuf + ikl + ip*jnumkl) = asum (nbasis,
-     & v(jscr + ip*nbasis), 1)
+                 v(jfbuf + ikl + ip*jnumkl) = ddot (nbasis,
+     & v(jscr + ip*nbasis), 1, v(jxbufp + ip*nbasis), 1)
  220          continue
 
  210       continue
@@ -210,25 +206,21 @@ C     Load right quadrature from file
 C     
 C     Do E(Q, P) = sum_{k,l} X(k, Q) X(l, Q) F(kl, P) and transpose it
 C     
-C     HERE WE NEED SUBMATRIX OF X in jxbufq . WILL FAIL IF L=1, K<NBASIS
+C     THIS PART WILL FAIL IF L=1, K<NBASIS
               do 310 ip = 0, jnump - 1
-               call dgemm ('n', 'n', jnumk, jnumq, jnuml, 1.0d0,  
-     & v(jfbuf + ip*jnumkl), jnumk, v(jxbufq + jl), nbasis, 0.0d0, 
-     & v(jscr), jnumk)
-               do 320 iq = 0, jnumq - 1
+                 call dgemm ('n', 'n', jnumk, jnumq, jnuml, 1.0d0,  
+     &      v(jfbuf + ip*jnumkl), jnumk, v(jxbufq + jl), nbasis, 0.0d0, 
+     &      v(jscr), jnumk)
+                    
+                 do 320 iq = 0, jnumq - 1 
+                    v(jebuf + ip + iq*jnump) =
+     & ddot (jnumk, v(jscr + iq*jnumk), 1, v(jxbufq + jk + iq*nbasis),1)
+                       
+ 320                continue
+ 310             continue
 
-                  do 325 ij = 0, jnumk - 1
-                     v(jscr + ij + iq*jnumk) =
-     & v(jscr + ij + iq*jnumk)*v(jxbufq + jk + iq*nbasis + ij)
- 325              continue
-
-                  v(jebuf + ip + iq*jnump) =
-     &                 asum (jnumk, v(jscr + iq*jnumk), 1)
-                  
- 320           continue
- 310        continue
-            
-            call updemt (iout, iprint, ngrid, jp, jnump, jq, jnumq, 
+                 
+              call updemt (iout, iprint, ngrid, jp, jnump, jq, jnumq, 
      &             v(jebuf), irwe, v(jend), lenv)
  300       continue
  200    continue
