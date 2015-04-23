@@ -99,12 +99,12 @@ C---------------------------------------------------+
       irw2efull = igetrw(nbsq*nbsq, 0)
 
       call frm2eints (iout, iprint, jsym2e, neq, neqshl, 
-     &     neqsh2, incorepos, accdes, next, irw2efull, v(jend),
+     &     neqsh2, accdes, incorepos, next, irw2efull, v(jend),
      & lenv-jend)
 
       if (incorepos) then
          j2eint = jend
-         jend = next
+         jend = jend + next
       endif
       
 C     Memory allocation

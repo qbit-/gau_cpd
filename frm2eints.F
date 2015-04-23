@@ -1,19 +1,19 @@
       subroutine frm2eints (iout, iprint, jsym2e, neq, neqshl, 
-     &     neqsh2, keep, accdes, next, irw2efull, v, lenv)
+     &     neqsh2, accdes, keepints, next, irw2efull, v, lenv)
       
       implicit none
 
 C     This is a simple routine to call PRISM and
 C     store 2e integrals to an RWF (needs to be replaced
 C     by a smarter code).
-C     The integrals are stored in the full form without 8-fold simmetry
+C     The integrals are stored in the full form without 8-fold symmetry
 C     FixMe: 6d basis is not properly accounted for
 
 C     Arguments:
 C     [in]  jsym2e             - controls symmetry.           
 C     [in]  neq, neqshl, neqs2 - symmetry related RWFs from Gaussian
-C     [in]  keep               - if we need to keep integrals in memory after return
 C     [in]  accdes             - desired accuracy from PRISM
+C     [in]  keepints           - if we need to keep integrals in memory after return
 C
 C     [out] next               - offset to the next free location in the memory
 C                                if integrals are kept there
@@ -31,7 +31,7 @@ C     arguments
 
       integer    jsym2e, neq, neqshl, neqsh2
       integer    next, irw2efull
-      logical    keep
+      logical    keepints
 
       real*8     accdes
 
@@ -85,10 +85,6 @@ C     debug
       integer     i, j, k, l
       logical     dbg
 
-C     contraction
-
-      
-
 C     Memory allocation
 
       jend = 1
@@ -107,7 +103,7 @@ C     allocate memory for integrals. For an easy setup for PRISM see l906
       
       call tstcor (jend-1, lenv, 'frm2eints: integrals')
 
-      if (keep) then
+      if (keepints) then
          next = jscr
       else
          next = 0
@@ -115,7 +111,7 @@ C     allocate memory for integrals. For an easy setup for PRISM see l906
 
 C     Initialize RWF for integrals
 
-      if (.not. keep) call conddf (irw2efull, nbsq*nbsq)
+      if (.not. keepints) call conddf (irw2efull, nbsq*nbsq)
 
 C     Retrieve symmetry information for PRISM (symmetry is ignored for now)
       
@@ -239,7 +235,7 @@ C     1/2 factors which PRISM put for I != J and K != L
 
 C     save integrals
 
-        if (.not. keep) call fileio (1, -irw2efull, len2eint,
+        if (.not. keepints) call fileio (1, -irw2efull, len2eint,
      &   v(j2eint), 0) 
 
 C     Debug printing
