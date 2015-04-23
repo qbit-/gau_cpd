@@ -1,6 +1,6 @@
       subroutine frm2eri (iout, iprint, jsym2e, neq, neqshl, 
-     &     neqsh2, ir12, keepinv, keepints, accdes, jovoff, next,
-     &     irwria, irwrib, v, lenv)
+     &     neqsh2, ir12, keepinv, keepints, tolinv, accdes, jovoff,
+     &     next, irwria, irwrib, v, lenv)
       implicit none
 C     
 C     This is a wrapper routine to form RI overlap and integrals and place them 
@@ -59,6 +59,8 @@ C
       jend    = 1
       jovoff  = 0
       next    = 0
+
+      call getnb6(nbas6d)
       
 C     set up PRISM control flags
 

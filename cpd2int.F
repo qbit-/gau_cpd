@@ -57,7 +57,7 @@ C +------------------------------------------------------------+
 C     include some Gaussian files
       
 #include "commonmol.inc"
-#include "commonb.inc"
+#include "commonb2.inc"
 #include "repall.inc"
 
 C     input / output variables
@@ -148,21 +148,15 @@ C     debug temporary stuff
 
 C------------RI testing-------------------------------------------------
 
-C     prism variables
+      integer     irwria, irwrib, ir12
+      integer     jovoff, jov, j2eri, j2erit
+      integer     ndbf, ndbf6d, nbas6d
+      integer     j2erec
+      real*8      XX
+      data        XX/0.0d0/
 
-      integer     ifmm, iopcl, ipflag, fmflag, fmflg1, nfxflg, ihmeth
-      integer     iseall
-      integer     lseall, momega, nomega
-      logical     allowp(50), fmm
-      parameter   ( momega = DEFMOMEGA, nomega = 6 )
-      real*8      omega(momega,nomega)
-
-      integer     jpflsta
-      integer     icntrl, i1cent, iraf, nbti
-      integer     iprtf
-
-      integer     irwria, itolri, ir12ri, ndbf, ndbf6d
-      
+      integer     jtmp, next, irw2efull, ii
+      integer     janb, nshelb, maxtyb
 C     format statements
 
  1001 format (' CPD2E was invoked with the following options:')
@@ -314,32 +308,44 @@ C-----------------------------------------------------------------------------+
 
 C-----------------------------------------------------------------------------------
 
-C     set up PRISM control flags
-
-C      ifmm = 0
-C      iseall = -1
-
-C      jpflsta = jend
-
-C      call setpfl (iout, iprint, ifmm, ipflag, allowp, fmm, fmflag,
-C     $     fmflg1, nfxflg, ihmeth, omega, iseall,lseall,jpflsta,v(jend),
-C     $     lenv-jend+1)
-
-C      itolri = 6
-C      ir12ri = 1
-C
-C     Form the RI inverse matrix (P|Q)**-1.
-C
-C      irwria = 0
-C      ndbf   = 0
-C      ndbf6d = 0
-C      call rifrma (iout,iprint,irwria,itolri,ir12ri,ipflag,allowp,ndbf,
-C     $    ndbf6d,natoms,ian,atmchg,c,iattyp,v(jend),
-C     $    lenv)
-C      write(iout,*) 'using ri', ndbf,ndbf6d
-C      call tstamp (1,'after rifrma')
+C     Load /B2/ with the density basis.
+      Call RdWrB(-10,0)
+      call getnb6(nbas6d)
       
+C     Figure out NDBF and NDBF6D.
+      call GetMBN(I5DB2,I7FB2,NShelB,ShelTB,ShelCB,NDBF)
+      call GetMBN(1,1,NShelB,ShelTB,ShelCB,NDBF6D)
 
+      ir12 = 1
+
+      call frm2eri (iout, iprint, jsym2e, neq, neqshl, 
+     &     neqsh2, ir12, .true., .true., tolinv, accdes, jovoff,
+     &     next, irwria, irwrib, v(jend), lenv - jend)
+
+      jov     = jend
+      j2eri   = jov    + jovoff
+      j2erit  = jend   + next
+      jtmp    = j2erit + nbas6d*nbas6d*ndbf
+      j2erec  = jtmp   + nbas6d*nbas6d*ndbf
+      jend    = j2erec + nbas6d*nbas6d*nbas6d*nbas6d
+       
+      call TrCor1(1,1,ndbf,nbas6d*nbas6d,3,V(j2eri),XX,XX,V(j2erit),XX,
+     &     XX,.False.,XX,XX)
+      call dgemm ('n', 'n', nbas6d*nbas6d, ndbf, ndbf, 1.0d0, v(j2eri),
+     &     nbas6d*nbas6d, v(jov), ndbf, 0.0d0, v(jtmp), nbas6d*nbas6d )
+      call dgemm ('n', 'n', nbas6d*nbas6d, nbas6d*nbas6d, ndbf, 1.0d0,
+     &     v(jtmp), nbas6d*nbas6d, v(j2erit), ndbf, 0.0d0,
+     &     v(j2erec), nbas6d*nbas6d)
+
+      call frm2eints (iout, iprint, jsym2e, neq, neqshl, 
+     &     neqsh2, accdes, .true., next, irw2efull, v(jend),lenv- jend)
+      
+      call daxpy (nbas6d*nbas6d*nbas6d*nbas6d, -1.0d0, v(j2erec), 1,
+     &     v(jend), 1)
+
+      write (iout,'10E12.3') (v(jend + ii),
+     &     ii=0,nbas6d*nbas6d*nbas6d*nbas6d-1)
+      
       call chainX (0)
 
       return

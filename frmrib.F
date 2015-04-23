@@ -34,13 +34,14 @@ C     Allocate memory.
       jBAO   = 1
       jXTmp  = jBAO  + NDBF6D*NBSq6D
       jEnd   = jXTmp + NDBF6D*NBSq6D
-      Call TstCor(jEnd,MDV,'RIFrmB')
+      write (iout, *) 'ndbf6d', ndbf6d, 'nbsq6d', nbsq6d, jend
+      Call TstCor(jEnd,MDV,'frmrib')
 
       if ( keep ) then
          next = NDBF6D*NBSq6D
       endif
       
-      jV = jBMO
+      jV = jXTmp
       MDV1 = MDV - jV + 1
 C     Form (Q|m,n).
       ICntrl = 600
@@ -53,28 +54,29 @@ C     Form (Q|m,n).
      $  0,0,IPFlag,AllowP,0,XX,0,0,.True.,.True.,.False.,.False.,
      $  .False.,I1Cent,AccDes,Zero,0,1,NDBF6D,0,1,0,0,0,0,1,1,JJ,JJ,JJ,
      $  XX,JJ,NBTI,JJ,XX,XX,XX,XX,XX,XX,XX,XX,XX,JJ,XX,XX,JJ,XX,XX,
-     $  NAtoms,IAn,AtmChg,C,IAtTyp,JJ,XX,XX,IPBC,XX,Energy,Zero,V(jBAO),
-     $  0,0,XX,XX,JJ,JJ,XX,V(jV),V(jV),MDV1)
+     $  NAtoms,IAn,AtmChg,C,IAtTyp,JJ,XX,XX,IPBC,XX,Energy,Zero,
+     $  V(jBAO),0,0,XX,XX,JJ,JJ,XX,V(jV),V(jV),MDV1)
 C     Fix AOS in /B/ as FoFCou converted it back to pure.
       Call GenAOS(1,1,NShell,ShellT,ShellC,Junk,AOS)
       Call GenAOS(1,1,NShelB,ShelTB,ShelCB,Junk,AOSB)
       Call FixAOD(.True.,NShell,ShellT,ShellC,NBas6D,NDBF6D,V(jBAO))
       Call GenAOS(I5DB2,I7FB2,NShelB,ShelTB,ShelCB,Junk,AOSB)
       Call ReDoC1(IOut,IPrint,.False.,1,1,I5DB2,I7FB2,NDBF6D,NDBF,
-     $  NDBF6D,NBSq6D,NShelB,ShelTB,ShelCB,V(jBAO),V(jBMO))
+     $  NDBF6D,NBSq6D,NShelB,ShelTB,ShelCB,V(jBAO),V(jXTmp))
       Call Pcck(0,Junk,V(jBAO),NDBF6D,NBSq6D,NDBF,NBSq6D)
       If(IPrint.ge.8) Call OutMtS(IOut,'(P|m,n) integrals:',0,1,V(jBAO),
      $  NDBF,NBSq6D,NDBF,NBSq6D)
 
-C     (P|m,n) -> (m,n|P)
+C      (P|m,n) -> (m,n|P)
       Call TrCor1(1,1,NBSq6D,NDBF,3,V(jBAO),XX,XX,V(jXTmp),XX,XX,
      $     .False.,XX,XX)
+      Call Amove(NDBF6D*NBSq6D, V(jXTmp), V(jBAO))
       
 C     Allocate the B file and save integrals if requested
       if(.not. keep) then
          LenRWB = NDBF6D*NBSq6D
          IRwRIB = IGetRW(LenRWB,0)
-         Call FileIO(1,-irwrib,NDBF*NBSq6D,V(jXTmp),0)
+         Call FileIO(1,-irwrib,NDBF*NBSq6D,V(jBAO),0)
       endif
 
       Return
