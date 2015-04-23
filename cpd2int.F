@@ -141,9 +141,28 @@ C     functions called
       real*8      decacc
       integer     intowp
 
+C     debug temporary stuff
+      
       integer     dims(4)
       logical     dbg
 
+C------------RI testing-------------------------------------------------
+
+C     prism variables
+
+      integer     ifmm, iopcl, ipflag, fmflag, fmflg1, nfxflg, ihmeth
+      integer     iseall
+      integer     lseall, momega, nomega
+      logical     allowp(50), fmm
+      parameter   ( momega = DEFMOMEGA, nomega = 6 )
+      real*8      omega(momega,nomega)
+
+      integer     jpflsta
+      integer     icntrl, i1cent, iraf, nbti
+      integer     iprtf
+
+      integer     irwria, itolri, ir12ri, ndbf, ndbf6d
+      
 C     format statements
 
  1001 format (' CPD2E was invoked with the following options:')
@@ -292,7 +311,35 @@ C-----------------------------------------------------------------------------+
          dims(2) = ngrid
          call outoctfmt(iout, 'x.mat', 'x', 2, dims, v(jend))
       endif
+
+C-----------------------------------------------------------------------------------
+
+C     set up PRISM control flags
+
+C      ifmm = 0
+C      iseall = -1
+
+C      jpflsta = jend
+
+C      call setpfl (iout, iprint, ifmm, ipflag, allowp, fmm, fmflag,
+C     $     fmflg1, nfxflg, ihmeth, omega, iseall,lseall,jpflsta,v(jend),
+C     $     lenv-jend+1)
+
+C      itolri = 6
+C      ir12ri = 1
+C
+C     Form the RI inverse matrix (P|Q)**-1.
+C
+C      irwria = 0
+C      ndbf   = 0
+C      ndbf6d = 0
+C      call rifrma (iout,iprint,irwria,itolri,ir12ri,ipflag,allowp,ndbf,
+C     $    ndbf6d,natoms,ian,atmchg,c,iattyp,v(jend),
+C     $    lenv)
+C      write(iout,*) 'using ri', ndbf,ndbf6d
+C      call tstamp (1,'after rifrma')
       
+
       call chainX (0)
 
       return
