@@ -1,4 +1,4 @@
-      subroutine ctrmemest(iout, iprint, nbasis, ngrid, incorepos, 
+      subroutine ctrmemest1(iout, iprint, nbasis, ngrid, keepints, 
      &     numkl, nump, numq, lenwbuf, lenfbuf, lenxbufp, lenxbufq,
      &     lenscr, lenebuf, v, lenv) 
 
@@ -10,7 +10,7 @@ C     Arguments:
 C     
 C     [in] nbasis - number of basis functions
 C     [in] ngrid  - number of grid points in the quadrature
-C     [out] incorepos - if fully in-core operation is possible
+C     [out] keepints - if fully in-core operation is possible
 C     [out] numkl - step size over the KL index of integrals. Here we allocate to iterate over whole counts of L only
 C     [out] nump  - step size over the right quadrature grid index
 C     [out] numq  - step size over the left quadrature grid index
@@ -31,7 +31,7 @@ C     Arguments
       integer    numkl, nump, numq
 
       integer    lenwbuf, lenfbuf, lenxbufp, lenxbufq, lenebuf, lenscr
-      logical    incorepos
+      logical    keepints
 
 C     Other
 
@@ -47,10 +47,10 @@ C     functions
 C     We make a crude estimation if intergrals can be kept in memory
       if ((lenv - nbsq*nbsq - nbasis*nbsq - 3*nbsq - npmax*nbsq) .gt. 0)
      &  then
-         incorepos = .true.
+         keepints = .true.
          res = lenv - nbsq*nbsq
       else
-         incorepos = .false.
+         keepints = .false.
          res = lenv
       endif
 

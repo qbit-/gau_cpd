@@ -1,5 +1,5 @@
       subroutine frm2eri (iout, iprint, jsym2e, neq, neqshl, 
-     &     neqsh2, ir12, keepinv, keepints, tolinv, accdes, jovoff,
+     &     neqsh2, ir12, keepov, keepints, tolinv, accdes, jovoff,
      &     next, irwria, irwrib, v, lenv)
       implicit none
 C     
@@ -12,7 +12,7 @@ C     Arguments:
 C     [in]  jsym2e             - controls symmetry.           
 C     [in]  neq, neqshl, neqs2 - symmetry related RWFs from Gaussian
 C     [in]  ir12               - metric to use in RI (1 - 1/r, 2 - overlap)
-C     [in]  keepinv            - if we need to keep the overlap inverse in memory
+C     [in]  keepov             - if we need to keep the overlap inverse in memory
 C     [in]  keepints           - if we need to keep integrals in memory after return
 C     [in]  accdes             - desired accuracy from PRISM
 C
@@ -34,7 +34,7 @@ C     arguments
       integer    jsym2e, neq, neqshl, neqsh2, ir12
       integer    irwria, irwrib
       integer    jovoff, next
-      logical    keepinv, keepints
+      logical    keepov, keepints
 
       real*8     accdes
 
@@ -76,11 +76,11 @@ C     set up PRISM control flags
 C     form the overlap. The sizes of auxiliarry basis are also returned here
       tolinv = 1e-6
 
-      call frmria (iout, iprint, jovoff, irwria, ndbf, ndbf6d, keepinv,
+      call frmria (iout, iprint, jovoff, irwria, ndbf, ndbf6d, keepov,
      &     ir12, tolinv, ipflag, allowp, natoms, ian, atmchg, c, iattyp,
      &     v(jend), lenv - jend)
 
-      if ( keepinv ) jend = jend + jovoff
+      if ( keepov ) jend = jend + jovoff
       
       call frmrib (iout, iprint, next, irwrib,
      &     keepints, ipflag, allowp, accdes, ndbf, ndbf6d,

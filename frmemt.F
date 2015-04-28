@@ -74,7 +74,7 @@ C     other
       integer    ikl, ip, iq, ik, il, ij
       integer    ioff, ldlen
 
-      logical    incorepos, dbg
+      logical    keepints, dbg
 
       integer    irw2efull
       integer    dims(4)
@@ -88,7 +88,7 @@ C     functions
       jend = 1 
       nbsq = nbasis*nbasis
 
-      call ctrmemest(iout, iprint, nbasis, ngrid, incorepos, 
+      call ctrmemest1(iout, iprint, nbasis, ngrid, keepints, 
      &     numkl, nump, numq, lenwbuf, lenfbuf, lenxbufp, lenxbufq,
      &     lenscr, lenebuf, v(jend), lenv) 
 
@@ -99,10 +99,10 @@ C---------------------------------------------------+
       irw2efull = igetrw(nbsq*nbsq, 0)
 
       call frm2eints (iout, iprint, jsym2e, neq, neqshl, 
-     &     neqsh2, accdes, incorepos, next, irw2efull, v(jend),
+     &     neqsh2, accdes, keepints, next, irw2efull, v(jend),
      & lenv-jend)
 
-      if (incorepos) then
+      if (keepints) then
          j2eint = jend
          jend = jend + next
       endif
@@ -153,7 +153,7 @@ C     Load KL block from memory or file
         ioff  = jkl*nbsq 
         ldlen = jnumkl*nbsq
 
-        if (incorepos) then
+        if (keepints) then
 C           call amove (ldlen, v(j2eint+ioff), v(jwbuf))
            jwbuf = j2eint + ioff
         else
@@ -233,7 +233,7 @@ C     THIS PART WILL FAIL IF L=1, K<NBASIS
 C     end of the contraction loop
 
         dbg = .true.
-        if (dbg .and. incorepos) then
+        if (dbg .and. keepints) then
            dims(1) = nbasis
            dims(2) = nbasis
            dims(3) = nbasis
