@@ -220,8 +220,8 @@ C     THIS PART WILL FAIL IF L=1, K<NBASIS
  310             continue
 
                  
-              call updemt (iout, iprint, ngrid, jp, jnump, jq, jnumq, 
-     &             v(jebuf), irwe, v(jend), lenv)
+              call updmatf (iout, iprint, ngrid, jp, jnump, ngrid, jq,
+     &                jnumq, v(jebuf), irwe, 1, v(jend), lenv)
  300       continue
  200    continue
 

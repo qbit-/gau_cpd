@@ -200,15 +200,27 @@ C
  220          continue
  210       continue
    
-           call updemt(C)
-           call updemt(D)
+           call updmatf (iout, iprint, ndbf6d, jkl, jnumkl, ngrid, 
+           jp, jnump, v(jfbufp), irwc, 0, v(jend), lenv - jend)
            
  200    continue
            
         jkl = jkl + jnumkl
         if (jkl .lt. ndbf6d) goto 100
 C     end of the contraction loop
+        
+        do 300 jp = 0, ngrid - 1, nump
+           if (jp + nump .gt. ngrid) then
+              jnump = ngrid - jp
+           else
+              jnump = nump
+           endif
+           
+           call fileio
 
+
+
+ 300    continue
 C     Block matrix multiplication
         do jp = 0, ngrid - 1
            do jq = 0, ngrid - 1 
