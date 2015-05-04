@@ -33,8 +33,8 @@ all: l325.exe
 
 MAIN325 = ml325.o
 
-OBJ325 =  atquadwrt.o cpd2int.o ctrmemest.o frm2eints.o frm2eri.o frmemt.o frmquad.o frmria.o frmrib.o frmspovinv.o \
-	  frmz.o outoctfmt.o updemt.o
+OBJ325 =  atquadwrt.o cpd2int.o ctrmemest1.o ctrmemest2.o frm2eints.o frm2eri.o frmemt.o frmemtri.o frmquad.o frmria.o frmrib.o frmspovinv.o \
+	  frmz.o outoctfmt.o updmatf.o
 
 l325.exe: $(MAIN325) $(OBJ325) 
 	$(FC0) -g -o l325.exe $(MAIN325) $(OBJ325) $(NUTIL) \

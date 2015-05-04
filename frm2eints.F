@@ -71,7 +71,7 @@ C     other
 
 C     functions called
 
-      integer     intowp, itqry
+      integer     intowp, itqry, igetrw
 
 C     constants
 
@@ -111,7 +111,7 @@ C     allocate memory for integrals. For an easy setup for PRISM see l906
 
 C     Initialize RWF for integrals
 
-      if (.not. keepints) call conddf (irw2efull, nbsq*nbsq)
+      if (.not. keepints) irw2efull = igetrw(nbsq*nbsq, 0)
 
 C     Retrieve symmetry information for PRISM (symmetry is ignored for now)
       

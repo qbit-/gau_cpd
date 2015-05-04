@@ -51,6 +51,7 @@ C     We make a crude estimation if intergrals can be kept in memory
 
       keepov = .true.
       res    = lenv - ndbf*ndbf
+      if (res .le. 0) call gauerr ('Insufficient memory in ctrmemest:0')
       
 C     Fixme: this is completely wrong
       if ((lenv-ndbf*nbsq-2*nbsq-3*nbsq-npmax*nbsq).gt.0)
@@ -91,8 +92,8 @@ C     Now assign all sizes
 
       lenwbuf = numkl*nbsq
       lenfbuf = numkl*nump
-      lenxbufp  = nump*nbasis
-      lenxbufq  = numq*nbasis
+      lenxbufp  = nump*max(nbasis,ndbf)
+      lenxbufq  = numq*max(nbasis,ndbf)
       lenscr    = pqmax*max(nbasis,ndbf)*npmax
       lenebuf   = nump*numq
 

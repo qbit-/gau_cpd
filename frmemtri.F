@@ -44,8 +44,10 @@ C     [in]  irwfac             - RWF with quadratures
 C     [out] irwe               - RWF with E matrices 
 C
 
-#include "commomob2.inc"
-      
+#include "commonb2.inc"
+C     Needed for commonb2 to work with implicit none
+
+      integer    nshelb, janb, maxtyb 
 C     Arguments 
 
       integer    iout, iprint, lenv
@@ -58,14 +60,14 @@ C     Arguments
 
 C     Pointers and sizes
 
-      integer    jend, next
-      integer    jov, j2eint,jwbuf,jovbuf, jfbuf, jcbuf, jxbufp, jxbufq
+      integer    jend, next, jovoff
+      integer    jov, j2eint,jwbuf, jfbuf, jxbufp, jxbufq
       integer    jscr, jebuf
       integer    lenwbuf, lenfbuf, lenxbufp, lenxbufq, lenscr, lenebuf
 
 C     other
 
-      integer    nbasis, nbsq, ngrid, ndbf
+      integer    nbasis, nbsq, ngrid, ndbf, ndbf6d
       integer    numkl, nump, numq
       integer    jnumkl, jnuml, jnumk, jnump, jnumq
       integer    jk, jl, jp, jq 
@@ -74,7 +76,7 @@ C     other
       integer    ikl, ip, iq, ik, il, ij
       integer    ioff, ldlen
 
-      logical    keep, dbg
+      logical    keepints, keepov, dbg
 
       integer    irwria, irwrib, irwric, irwrid
       integer    dims(4)
@@ -95,8 +97,7 @@ C     Figure out NDBF and NDBF6D.
 
       jend   = 1 
       nbsq   = nbasis*nbasis
-      ndb6sq = ndbf6d*ndbf6d
-      
+          
       call ctrmemest2(iout, iprint, nbasis, ngrid, ndbf,
      &     keepov, keepints, numkl, nump, numq, lenwbuf, lenfbuf,
      &     lenxbufp, lenxbufq, lenscr, lenebuf, v(jend), lenv - jend) 
@@ -110,8 +111,8 @@ C---------------------------------------------------+
      &     next, irwria, irwrib, v(jend), lenv - jend)
 
 C     Allocate files for half projected integrals and half projected integrals times overlap 
-      irwric = igetrw(ngrid*ndbf6d)
-      irwrid = igetrw(ngrid*ndbf6d)
+      irwric = igetrw (ngrid*ndbf6d, 0)
+      irwrid = igetrw (ngrid*ndbf6d, 0)
       
       if (keepov) then
          jov    = jend
@@ -126,10 +127,8 @@ C     Allocate files for half projected integrals and half projected integrals t
 C     Memory allocation
       
       jwbuf  = jend
-      jovbuf = jwbuf  + lenwbuf
-      jfbuf  = jovbuf + lenfbuf
-      jcbuf  = jfbuf  + lenfbuf
-      jxbufp = jcbuf  + lenfbuf
+      jfbuf  = jwbuf  + lenwbuf
+      jxbufp = jfbuf  + lenfbuf
       jxbufq = jxbufp + lenxbufp
       jscr   = jxbufq + lenxbufq
       jebuf  = jscr   + lenscr
@@ -195,19 +194,21 @@ C
      & v(jscr), nbasis)
 
               do 220 ip = 0, jnump - 1 
-                 v(jfbufp + ikl + ip*jnumkl) = ddot (nbasis,
+                 v(jfbuf + ikl + ip*jnumkl) = ddot (nbasis,
      & v(jscr + ip*nbasis), 1, v(jxbufp + ip*nbasis), 1)
  220          continue
  210       continue
    
            call updmatf (iout, iprint, ndbf6d, jkl, jnumkl, ngrid, 
-           jp, jnump, v(jfbufp), irwc, 0, v(jend), lenv - jend)
+     &      jp, jnump, v(jfbuf), irwric, 0, v(jscr), lenscr)
            
  200    continue
            
         jkl = jkl + jnumkl
         if (jkl .lt. ndbf6d) goto 100
 C     end of the contraction loop
+
+C     Form A(L, Q) = S(L, M)^(-1) * F(M, Q)
         
         do 300 jp = 0, ngrid - 1, nump
            if (jp + nump .gt. ngrid) then
@@ -216,18 +217,49 @@ C     end of the contraction loop
               jnump = nump
            endif
            
-           call fileio
-
-
+           ioff  = jp*ndbf6d
+           ldlen = jnump*ndbf6d
+           
+           call fileio (2, -irwric, ldlen, v(jxbufp), ioff)  
+           call dgemm ('n', 'n', ndbf6d, jnump, ndbf6d, 1.0d0,
+     & v(jov), ndbf6d, v(jfbuf), ndbf6d, 0.0d0, v(jscr), ndbf6d)
+           call fileio (1, -irwrid, ldlen, v(jscr), ioff)
 
  300    continue
-C     Block matrix multiplication
-        do jp = 0, ngrid - 1
-           do jq = 0, ngrid - 1 
+        
+C     Block matrix multiplication to form E(P, Q) =  F(P, L) * A(L, Q) 
+        do 400 jp = 0, ngrid - 1, nump
+           if (jp + nump .gt. ngrid) then
+              jnump = ngrid - jp
+           else
+              jnump = nump
+           endif
+           
+           ioff  = jp*ndbf6d
+           ldlen = jnump*ndbf6d
+           
+           call fileio (2, -irwric, ldlen, v(jxbufp), ioff)
+
+           do 500 jq = 0, ngrid - 1, numq 
 C     use full ndbf6d blocks
-              call updemt(E)
-           enddo
-        enddo
+              if (jq + numq .gt. ngrid) then
+                 jnumq = ngrid - jq
+              else
+                 jnumq = numq
+              endif
+              
+              ioff  = jq*ndbf6d
+              ldlen = jnumq*ndbf6d
+
+              call fileio (2, -irwrid, ldlen, v(jxbufq), ioff)
+
+              call dgemm ('t', 'n', jnump, ndbf6d, jnumq, 1.0d0,
+     &    v(jxbufp), ndbf6d, v(jxbufq), ndbf6d, 0.0d0, v(jebuf), jnump)  
+
+              call updmatf (iout, iprint, ngrid, jp, jnump, ngrid, jq,
+     &    jnumq, v(jebuf), irwe, 1, v(jscr), lenscr)
+ 500       continue
+ 400    continue
         
         dbg = .true.
         if (dbg .and. keepints) then

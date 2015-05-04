@@ -81,7 +81,6 @@ C     other
       
 C     functions
       
-      integer    igetrw
       real*8     ddot, dsdot
 
 
@@ -95,9 +94,7 @@ C     functions
 C---------------------------------------------------+      
 C     Compute integrals                             |
 C---------------------------------------------------+
-
-      irw2efull = igetrw(nbsq*nbsq, 0)
-
+      
       call frm2eints (iout, iprint, jsym2e, neq, neqshl, 
      &     neqsh2, accdes, keepints, next, irw2efull, v(jend),
      & lenv-jend)

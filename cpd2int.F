@@ -292,18 +292,23 @@ C-----------------------------------------------------------------------------+
 
       dbg = .true. 
       if (dbg) then
+         call fileio(2,-irwfac,nbasis*ngrid,v(jend),0)
+         dims(1) = nbasis
+         dims(2) = ngrid
+         call outoctfmt(iout, 'x.mat', 'x', 2, dims, v(jend))
+
+         call fileio(2,-irwspo,ngrid*ngrid,v(jend),0)
+         dims(1) = ngrid
+         dims(2) = ngrid
+         call outoctfmt(iout, 's.mat', 's', 2, dims, v(jend))
+         
          call fileio(2,-irwe,ngrid*ngrid,v(jend),0)
          dims(1) = ngrid
          dims(2) = ngrid
          call outoctfmt(iout, 'e.mat', 'e', 2, dims, v(jend))
          
          call fileio(2,-irwz,ngrid*ngrid,v(jend),0)
-         call outoctfmt(iout, 'z.mat', 'z', 2, dims, v(jend))
-         
-         call fileio(2,-irwfac,nbasis*ngrid,v(jend),0)
-         dims(1) = nbasis
-         dims(2) = ngrid
-         call outoctfmt(iout, 'x.mat', 'x', 2, dims, v(jend))
+         call outoctfmt(iout, 'z.mat', 'z', 2, dims, v(jend))         
       endif
 
 C-----------------------------------------------------------------------------------
@@ -345,6 +350,15 @@ C     Figure out NDBF and NDBF6D.
 
       write (iout,'10E12.3') (v(jend + ii),
      &     ii=0,nbas6d*nbas6d*nbas6d*nbas6d-1)
+
+      call frmemtri (iout, iprint, nbasis, ngrid, jsym2e, neq, neqshl,
+     &     neqsh2, ir12, tolinv, accdes, irwfac, irwe, v(jend),
+     &     lenv - jend)
+
+      call fileio(2, -irwe, ngrid*ngrid, v(jend), 0)
+      dims(1) = ngrid
+      dims(2) = ngrid
+      call outoctfmt(iout, 'eri.mat', 'eri', 2, dims, v(jend))
       
       call chainX (0)
 
