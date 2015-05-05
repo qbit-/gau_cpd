@@ -32,7 +32,7 @@ C     other
       if (imode .eq. 0) then 
          do 100 ii = 0, numy - 1
             ioff = x + (y + ii)*dimx
-            call fileio (1, -irw, numx, buf(ii*numx), ioff)
+            call fileio (1, -irw, numx, buf(1 + ii*numx), ioff)
  100     continue
 
       elseif (imode .eq. 1) then 
@@ -45,7 +45,7 @@ C     other
          do 200 ii = 0, numy - 1
             ioff = x + (y + ii)*dimx
             call fileio (2, -irw, numx, v(jscr), ioff)
-            call daxpy (numx, 1.0d0, buf(1+ii*numx), 1, v(jscr), 1)
+            call daxpy (numx, 1.0d0, buf(1 + ii*numx), 1, v(jscr), 1)
             call fileio (1, -irw, numx, v(jscr), ioff)
  200     continue
       endif

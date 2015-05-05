@@ -66,8 +66,8 @@ C     Fixme: this is completely wrong
 
 C     Just set fixed values in a dumb way for now
 
-      nump = nbasis
-      numq = nbasis
+      nump = ngrid
+      numq = ngrid
       pqmax = max(nump, numq)
 
 C     Scratch buffers for loading grid blocks

@@ -253,7 +253,7 @@ C     use full ndbf6d blocks
 
               call fileio (2, -irwrid, ldlen, v(jxbufq), ioff)
 
-              call dgemm ('t', 'n', jnump, ndbf6d, jnumq, 1.0d0,
+              call dgemm ('t', 'n', jnump, jnumq, ndbf6d, 1.0d0,
      &    v(jxbufp), ndbf6d, v(jxbufq), ndbf6d, 0.0d0, v(jebuf), jnump)  
 
               call updmatf (iout, iprint, ngrid, jp, jnump, ngrid, jq,
@@ -266,7 +266,8 @@ C     use full ndbf6d blocks
            dims(1) = nbasis
            dims(2) = nbasis
            dims(3) = ndbf6d
-           call outoctfmt(iout, 'ints.mat', 'ints', 3, dims, v(j2eint))
+           call outoctfmt(iout, 'intsri.mat', 'intsri', 3, dims,
+     &          v(j2eint))
         endif
         
         end
