@@ -57,8 +57,6 @@ C +------------------------------------------------------------+
 C     include some Gaussian files
       
 #include "commonmol.inc"
-#include "commonb2.inc"
-#include "repall.inc"
 
 C     input / output variables
 
@@ -92,6 +90,9 @@ C     general options variables
 
       integer     iprint
       integer     iradan, iranwt, irangd, iradanu, iranwtu, irangdu
+      integer     iuseri, ir12
+
+      logical     ri
       
 C     memory allocation variables
 
@@ -146,17 +147,6 @@ C     debug temporary stuff
       integer     dims(4)
       logical     dbg
 
-C------------RI testing-------------------------------------------------
-
-      integer     irwria, irwrib, ir12
-      integer     jovoff, jov, j2eri, j2erit
-      integer     ndbf, ndbf6d, nbas6d
-      integer     j2erec
-      real*8      XX
-      data        XX/0.0d0/
-
-      integer     jtmp, next, irw2efull, ii
-      integer     janb, nshelb, maxtyb
 C     format statements
 
  1001 format (' CPD2E was invoked with the following options:')
@@ -233,6 +223,15 @@ C       does not force the density or Fock matrices to be symmetric.
 
       jsym2e = 0
 
+C     Use of RI (N^4 scaling algorithm) and related options
+
+      iuseri = mod(iop(109), 10)
+      If(iuseri .eq. 1) ri = .true.
+      
+C     Metric to use with RI: 1 - 1/r, 2 - overlap      
+      ir12 = mod (iop(109), 100000) / 10000
+      if (ir12 .eq. 0) ir12 = 1
+      
 C     Restore /IBF/
 
       call fileio (2, -irwibf, intowp (30), ibf, 0)
@@ -280,9 +279,16 @@ C-----------------------------------------------------------------------------+
 C     Project integrals onto the quadrature space                             |
 C-----------------------------------------------------------------------------+
 
-      call frmemt(iout, iprint, nbas6d, ngrid, jsym2e, neq,
-     &     neqshl, neqsh2, accdes, irwfac, irwe, v(jend), lenv - jend)
+      if (.not. ri) then
+         call frmemt(iout, iprint, nbas6d, ngrid, jsym2e, neq,
+     &    neqshl, neqsh2, accdes, irwfac, irwe, v(jend), lenv - jend)
 
+      else
+         call frmemtri(iout, iprint, nbasis, ngrid, jsym2e, neq, neqshl,
+     &     neqsh2, ir12, tolinv, accdes, irwfac, irwe, v(jend),
+     &     lenv - jend)
+      endif
+      
 C-----------------------------------------------------------------------------+
 C     Contract projected integrals with the spatial overlap                   |
 C-----------------------------------------------------------------------------+
@@ -311,55 +317,6 @@ C-----------------------------------------------------------------------------+
          call outoctfmt(iout, 'z.mat', 'z', 2, dims, v(jend))         
       endif
 
-C-----------------------------------------------------------------------------------
-
-C     Load /B2/ with the density basis.
-      Call RdWrB(-10,0)
-      call getnb6(nbas6d)
-      
-C     Figure out NDBF and NDBF6D.
-      call GetMBN(I5DB2,I7FB2,NShelB,ShelTB,ShelCB,NDBF)
-      call GetMBN(1,1,NShelB,ShelTB,ShelCB,NDBF6D)
-
-      ir12 = 1
-
-      call frm2eri (iout, iprint, jsym2e, neq, neqshl, 
-     &     neqsh2, ir12, .true., .true., tolinv, accdes, jovoff,
-     &     next, irwria, irwrib, v(jend), lenv - jend)
-
-      jov     = jend
-      j2eri   = jov    + jovoff
-      j2erit  = jend   + next
-      jtmp    = j2erit + nbas6d*nbas6d*ndbf
-      j2erec  = jtmp   + nbas6d*nbas6d*ndbf
-      jend    = j2erec + nbas6d*nbas6d*nbas6d*nbas6d
-       
-      call TrCor1(1,1,ndbf,nbas6d*nbas6d,3,V(j2eri),XX,XX,V(j2erit),XX,
-     &     XX,.False.,XX,XX)
-      call dgemm ('n', 'n', nbas6d*nbas6d, ndbf, ndbf, 1.0d0, v(j2eri),
-     &     nbas6d*nbas6d, v(jov), ndbf, 0.0d0, v(jtmp), nbas6d*nbas6d )
-      call dgemm ('n', 'n', nbas6d*nbas6d, nbas6d*nbas6d, ndbf, 1.0d0,
-     &     v(jtmp), nbas6d*nbas6d, v(j2erit), ndbf, 0.0d0,
-     &     v(j2erec), nbas6d*nbas6d)
-
-      call frm2eints (iout, iprint, jsym2e, neq, neqshl, 
-     &     neqsh2, accdes, .true., next, irw2efull, v(jend),lenv- jend)
-      
-      call daxpy (nbas6d*nbas6d*nbas6d*nbas6d, -1.0d0, v(j2erec), 1,
-     &     v(jend), 1)
-
-      write (iout,'10E12.3') (v(jend + ii),
-     &     ii=0,nbas6d*nbas6d*nbas6d*nbas6d-1)
-
-      call frmemtri (iout, iprint, nbasis, ngrid, jsym2e, neq, neqshl,
-     &     neqsh2, ir12, tolinv, accdes, irwfac, irwe, v(jend),
-     &     lenv - jend)
-
-      call fileio(2, -irwe, ngrid*ngrid, v(jend), 0)
-      dims(1) = ngrid
-      dims(2) = ngrid
-      call outoctfmt(iout, 'eri.mat', 'eri', 2, dims, v(jend))
-      
       call chainX (0)
 
       return
