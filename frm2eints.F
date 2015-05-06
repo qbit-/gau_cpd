@@ -241,7 +241,7 @@ C     save integrals
 
 C     Debug printing
 
-      dbg = .false.
+      dbg = .true.
 
       if (dbg) then
          dims(1) = nbasis
@@ -249,7 +249,7 @@ C     Debug printing
          dims(3) = nbasis
          dims(4) = nbasis
          
-         call outoctfmt (iout, 'ints.mat', 'ints', 4, dims,
+         call outoctfmt (iout, 'ints.mat', 1, 'ints', 4, dims,
      &        v(j2eint))
       endif
 

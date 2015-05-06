@@ -15,12 +15,17 @@ C     Reconstruct the tensor from it's decomposition
       integer i, j, k, l, ii
 
       integer igetrw
-      real*8  dsdot
+      real*8  ddot
       real*8  elem
-C     
-      irwfact = igetrw (ngrid*nbasis, 0)
-      call mattrn (1, 1, nbasis, ngrid, 3, irwfac, irwfact, lenv/2, v)
+
+      integer jx, jxt
+      real*8  xx
+C
       
+      irwfact = igetrw (ngrid*nbasis, 0)
+      call mattrn (1,1,ngrid,nbasis,3,irwfac,irwfact,lenv/2,v(1))  
+      
+C       
       jend   = 1
       jz     = jend
       jveci  = jz + ngrid*ngrid
@@ -34,7 +39,7 @@ C
       
       call tstcor (jend-1, lenv, 'reconstr')
 
-      irwrec = igetrw (nbasis*nbasis*nbasis*nbasis)
+      irwrec = igetrw (nbasis*nbasis*nbasis*nbasis, 0)
       
 C     Read Z
       call fileio(2,-irwz,ngrid*ngrid,v(jz),0)
@@ -61,7 +66,7 @@ C     Now the fun starts
 
                   call dgemv ('n', ngrid, ngrid, 1.0d0, v(jz), ngrid,
      &                 v(jvecij), 1, 0.0d0, v(jscr), 1)
-                  elem = dsdot (ngrid, v(jscr), 1, v(jveckl), 1)
+                  elem = ddot (ngrid, v(jscr), 1, v(jveckl), 1)
 
                   call fileio (1, irwrec, 1, elem, 0)
  400           continue

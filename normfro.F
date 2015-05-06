@@ -7,12 +7,12 @@
       integer nbasis, irw
 
       integer jend, blksz, jblksz, jblock, nbsq, ii
-      real*8  normfro
+      real*8  normfro, tmp
       real*8  dlange
       real*8  xx
       
       jend  = 1
-      nbsq  = nbsq
+      nbsq  = nbasis*nbasis
       
       blksz = (lenv - jend) / (nbsq)
       if (blksz .gt. nbsq) blksz = nbsq
@@ -23,16 +23,18 @@
       
       normfro = 0.0d0
 
-      do 100 ii = 0, nbsq, blksz
+      do 100 ii = 0, nbsq - 1, blksz
            if (ii + blksz .gt. nbsq) then
               jblksz = nbsq - ii
            else
               jblksz = blksz
            endif
 
-           call fileio (2, -irw, jblksz*nbsq, v(jblock), ii*blksz) 
-           normfro = normfro + dlange ('f', nbsq, jblksz, v(jblock),
+           call fileio (2, -irw, jblksz*nbsq, v(jblock), ii*blksz)
+           tmp     = dlange ('f', nbsq, jblksz, v(jblock),
      &          nbsq, xx)
+           normfro = normfro + tmp*tmp
  100  continue
-         
+
+      normfro = dsqrt(normfro)
       end

@@ -146,7 +146,7 @@ C     debug temporary stuff
       
       integer     dims(4)
       integer     jj, irw2efull, irwrec
-      real*8      froful, frodiff
+      real*8      normfro, froful, frodiff
       logical     dbg, tests
 
 C     format statements
@@ -303,35 +303,51 @@ C-----------------------------------------------------------------------------+
          call fileio(2,-irwfac,nbasis*ngrid,v(jend),0)
          dims(1) = nbasis
          dims(2) = ngrid
-         call outoctfmt(iout, 'x.mat', 'x', 2, dims, v(jend))
+         call outoctfmt(iout, 'x.mat', 1, 'x', 2, dims, v(jend))
 
          call fileio(2,-irwspo,ngrid*ngrid,v(jend),0)
          dims(1) = ngrid
          dims(2) = ngrid
-         call outoctfmt(iout, 's.mat', 's', 2, dims, v(jend))
+         call outoctfmt(iout, 's.mat', 1, 's', 2, dims, v(jend))
          
          call fileio(2,-irwe,ngrid*ngrid,v(jend),0)
          dims(1) = ngrid
          dims(2) = ngrid
-         call outoctfmt(iout, 'e.mat', 'e', 2, dims, v(jend))
+         call outoctfmt(iout, 'e.mat', 1, 'e', 2, dims, v(jend))
          
          call fileio(2,-irwz,ngrid*ngrid,v(jend),0)
-         call outoctfmt(iout, 'z.mat', 'z', 2, dims, v(jend))         
+         call outoctfmt(iout, 'z.mat', 1, 'z', 2, dims, v(jend))         
       endif
 
       tests = .true.
       if (tests) then
-         call frm2eints (iout, iprint, jsym2e, neq, neqshl, neqsh2,
-     &    accdes, .false., jj, irw2efull, v(jend), lenv)  
+         if (ri) then
+            call frm2eints (iout, iprint, jsym2e, neq, neqshl, neqsh2,
+     &           accdes, .false., jj, irw2efull, v(jend), lenv)
+         endif
+         
          froful=normfro(iout, iprint, nbasis, irw2efull, v(jend), lenv)
- 
+         
          call reconstr (iout, iprint, nbasis, ngrid,
      &     irwfac, irwz, irwrec, v(jend), lenv)
-         call asubf (iout, iprint, irw2efull, irwrec, v(jend), lenv) 
+         call asubf(iout,iprint,nbasis,irw2efull,irwrec, v(jend), lenv) 
          frodiff=normfro (iout, iprint, nbasis, irwrec, v(jend), lenv)
+
+ 1100    format(A,I20)
+ 1200    format(A,E20.12)
+         
+         write (iout, 1100) ' nbasis = ', nbasis
+         write (iout, 1100) ' ngrid = ', ngrid
+         write (iout, 1200) ' full = ', froful
+         write (iout, 1200) ' diff = ', frodiff
+
+         call outoctfmt(iout, 'norm.mat', 1, 'nbasis',1,1,dble(nbasis))
+         call outoctfmt(iout, 'norm.mat', 2, 'ngrid',1,1,dble(ngrid))
+         call outoctfmt(iout, 'norm.mat', 2, 'full', 1, 1, froful)
+         call outoctfmt(iout, 'norm.mat', 2, 'diff', 1, 1, frodiff)
          
       endif
-      
+
       call chainX (0)
 
       return

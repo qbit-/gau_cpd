@@ -179,7 +179,7 @@ C
      & v(jscr), nbasis)
 
               do 220 ip = 0, jnump - 1 
-                 v(jfbuf + ikl + ip*jnumkl) = dsdot (nbasis,
+                 v(jfbuf + ikl + ip*jnumkl) = ddot (nbasis,
      & v(jscr + ip*nbasis), 1, v(jxbufp + ip*nbasis), 1)
  220          continue
 
@@ -209,7 +209,7 @@ C     THIS PART WILL FAIL IF L=1, K<NBASIS
                     
                  do 320 iq = 0, jnumq - 1 
                     v(jebuf + ip + iq*jnump) =
-     & dsdot(jnumk, v(jscr + iq*jnumk), 1, v(jxbufq + jk + iq*nbasis),1)
+     & ddot(jnumk, v(jscr + iq*jnumk), 1, v(jxbufq + jk + iq*nbasis),1)
                        
  320                continue
  310             continue

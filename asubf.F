@@ -1,4 +1,4 @@
-      subroutine asubf (iout, iprint, irw1, irw2, v, lenv)
+      subroutine asubf (iout, iprint, nbasis, irw1, irw2, v, lenv)
       implicit none
       
       integer iout, iprint, lenv
@@ -9,7 +9,7 @@
       integer jend, blksz, jblksz, jblock1, jblock2, nbsq, ii
       
       jend  = 1
-      nbsq  = nbsq
+      nbsq  = nbasis*nbasis
       
       blksz = (lenv - jend) / (2*nbsq)
       if (blksz .gt. nbsq) blksz = nbsq
@@ -19,7 +19,7 @@
       jend    = jblock2 + blksz*nbsq
       call tstcor (jend-1, lenv, 'asubf: memory allocation')
 
-      do 100 ii = 0, nbsq, blksz
+      do 100 ii = 0, nbsq - 1, blksz
            if (ii + blksz .gt. nbsq) then
               jblksz = nbsq - ii
            else
