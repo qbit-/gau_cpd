@@ -145,7 +145,9 @@ C     functions called
 C     debug temporary stuff
       
       integer     dims(4)
-      logical     dbg
+      integer     jj, irw2efull, irwrec
+      real*8      froful, frodiff
+      logical     dbg, tests
 
 C     format statements
 
@@ -317,6 +319,19 @@ C-----------------------------------------------------------------------------+
          call outoctfmt(iout, 'z.mat', 'z', 2, dims, v(jend))         
       endif
 
+      tests = .true.
+      if (tests) then
+         call frm2eints (iout, iprint, jsym2e, neq, neqshl, neqsh2,
+     &    accdes, .false., jj, irw2efull, v(jend), lenv)  
+         froful=normfro(iout, iprint, nbasis, irw2efull, v(jend), lenv)
+ 
+         call reconstr (iout, iprint, nbasis, ngrid,
+     &     irwfac, irwz, irwrec, v(jend), lenv)
+         call asubf (iout, iprint, irw2efull, irwrec, v(jend), lenv) 
+         frodiff=normfro (iout, iprint, nbasis, irwrec, v(jend), lenv)
+         
+      endif
+      
       call chainX (0)
 
       return

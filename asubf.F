@@ -1,9 +1,8 @@
-      function asubf (iout, iprint, irw1, irw2, v, lenv)
+      subroutine asubf (iout, iprint, irw1, irw2, v, lenv)
       implicit none
       
       integer iout, iprint, lenv
       real*8  v(*)
-      real*8  asubf
       
       integer nbasis, irw1, irw2
 
@@ -28,8 +27,9 @@
            endif
 
            call fileio (2, -irw1, jblksz*nbsq, v(jblock1), ii*blksz) 
-           call fileio (2, -irw2, jblksz*nbsq, v(jblock1), ii*blksz) 
+           call fileio (2, -irw2, jblksz*nbsq, v(jblock2), ii*blksz) 
            call daxpy (jblksz*nbsq,-1.0d0,v(jblock1),1,v(jblock2),1)
+           call fileio (1, -irw2, jblksz*nbsq, v(jblock2), ii*blksz) 
  100  continue
          
 
