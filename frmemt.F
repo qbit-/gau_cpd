@@ -74,10 +74,9 @@ C     other
       integer    ikl, ip, iq, ik, il, ij
       integer    ioff, ldlen
 
-      logical    keepints, dbg
+      logical    keepints
 
       integer    irw2efull
-      integer    dims(4)
       
 C     functions
       
@@ -114,7 +113,6 @@ C     Memory allocation
       jebuf  = jscr   + lenscr
       jend   = jebuf  + lenebuf
 
-      write (iout, *) 'blah from frmemt'
       call tstcor (jend-1, lenv, 'frmemt: memory allocation')
 
 C     Allocate RWF for the E matrix
@@ -181,7 +179,7 @@ C
      & v(jscr), nbasis)
 
               do 220 ip = 0, jnump - 1 
-                 v(jfbuf + ikl + ip*jnumkl) = ddot (nbasis,
+                 v(jfbuf + ikl + ip*jnumkl) = dsdot (nbasis,
      & v(jscr + ip*nbasis), 1, v(jxbufp + ip*nbasis), 1)
  220          continue
 
@@ -211,7 +209,7 @@ C     THIS PART WILL FAIL IF L=1, K<NBASIS
                     
                  do 320 iq = 0, jnumq - 1 
                     v(jebuf + ip + iq*jnump) =
-     & ddot (jnumk, v(jscr + iq*jnumk), 1, v(jxbufq + jk + iq*nbasis),1)
+     & dsdot(jnumk, v(jscr + iq*jnumk), 1, v(jxbufq + jk + iq*nbasis),1)
                        
  320                continue
  310             continue
@@ -229,14 +227,5 @@ C     THIS PART WILL FAIL IF L=1, K<NBASIS
         if (jkl .lt. nbsq - 1) goto 100
 C     end of the contraction loop
 
-        dbg = .true.
-        if (dbg .and. keepints) then
-           dims(1) = nbasis
-           dims(2) = nbasis
-           dims(3) = nbasis
-           dims(4) = nbasis
-           call outoctfmt(iout, 'ints.mat', 'ints', 4, dims, v(j2eint))
-        endif
-        
         end
       

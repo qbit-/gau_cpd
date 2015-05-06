@@ -23,6 +23,10 @@ C            iattyp
       Real*8 AtmChg(*),C(*),V(*),XX(1)
       Save Zero,JJ,XX,IPBC
       Data Zero/0.0d0/,JJ/0/,XX/0.0d0/,IPBC/0/
+
+      Logical dbg
+      Integer Dims(3)
+
  1000 Format(' RIFrmB:  LenRWB=',i12)
 C
 C     Compute lengths
@@ -79,5 +83,13 @@ C     Allocate the B file and save integrals if requested
          Call FileIO(1,-irwrib,NDBF*NBSq6D,V(jBAO),0)
       endif
 
+      Dbg = .False.
+      if (Dbg) then
+         Dims(1) = nbas6d
+         Dims(2) = nbas6d
+         Dims(3) = ndbf6d
+         call outoctfmt (iout, 'intsri.mat', 'intsri', 3, dims, v(jBAO))
+      endif
+      
       Return
       End

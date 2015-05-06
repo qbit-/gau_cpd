@@ -241,7 +241,6 @@ C     Block matrix multiplication to form E(P, Q) =  F(P, L) * A(L, Q)
            call fileio (2, -irwric, ldlen, v(jxbufp), ioff)
 
            do 500 jq = 0, ngrid - 1, numq 
-C     use full ndbf6d blocks
               if (jq + numq .gt. ngrid) then
                  jnumq = ngrid - jq
               else
@@ -260,15 +259,6 @@ C     use full ndbf6d blocks
      &    jnumq, v(jebuf), irwe, 1, v(jscr), lenscr)
  500       continue
  400    continue
-        
-        dbg = .true.
-        if (dbg .and. keepints) then
-           dims(1) = nbasis
-           dims(2) = nbasis
-           dims(3) = ndbf6d
-           call outoctfmt(iout, 'intsri.mat', 'intsri', 3, dims,
-     &          v(j2eint))
-        endif
         
         end
       

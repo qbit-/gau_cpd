@@ -83,6 +83,7 @@ C     constants
 C     debug
       
       integer     i, j, k, l
+      integer     dims(4)
       logical     dbg
 
 C     Memory allocation
@@ -243,19 +244,13 @@ C     Debug printing
       dbg = .false.
 
       if (dbg) then
-
- 55     format ('(', I4,',',I4,'|',I4,',',I4,') = ',F6.4)
-        do i = 0, nbasis-1
-           do j = 0, nbasis-1
-              do k = 0, nbasis-1
-                 do l = 0, nbasis-1
-                 write (iout,55) i,j,k,l,v(j2eint+i*nbsq*nbasis+
-     & j*nbsq + k*nbasis + l)
-              enddo
-           enddo
-        enddo
-      enddo
-
+         dims(1) = nbasis
+         dims(2) = nbasis
+         dims(3) = nbasis
+         dims(4) = nbasis
+         
+         call outoctfmt (iout, 'ints.mat', 'ints', 4, dims,
+     &        v(j2eint))
       endif
 
       end
