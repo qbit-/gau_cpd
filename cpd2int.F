@@ -1,5 +1,4 @@
 
-
       subroutine cpd2int (v, ngot)
 
       implicit none
@@ -146,7 +145,10 @@ C     debug temporary stuff
       
       integer     dims(4)
       integer     jj, irw2efull, irwrec
+      integer     ndbf6d
+      integer     irwria, irwrib
       real*8      normfro, froful, frodiff
+      real*8      outbuf(4)
       logical     dbg, tests
 
 C     format statements
@@ -263,6 +265,27 @@ C     Get 6d basis used with all quadratures
 
       write (iout, *)
       
+C------------------------------------------------------------------------------+
+C     Fixme: frmquad breaks PRISM settings, hence integral formation done first
+C------------------------------------------------------------------------------+     
+
+      tests = .true.
+      if (ri .and. tests) then
+         call frm2eints (iout, iprint, jsym2e, neq, neqshl, neqsh2,
+     &     accdes, .false., jj, irw2efull, v(jend), lenv)
+      endif         
+
+      if (.not. ri) then
+         call frm2eints (iout, iprint, jsym2e, neq, neqshl, neqsh2,
+     &     accdes, .false., jj, irw2efull, v(jend), lenv)
+
+      else
+         call frm2eri (iout, iprint, jsym2e, neq, neqshl, 
+     &        neqsh2, ir12, .false., .false., tolinv, accdes, jj,
+     &        jj, irwria, irwrib, v(jend), lenv - jend)
+
+      endif
+
 C-----------------------------------------------------------------------------+
 C     Compute the collocation matrix X(mu,G) and save it to the RWF irwfac    |
 C-----------------------------------------------------------------------------+
@@ -283,12 +306,13 @@ C-----------------------------------------------------------------------------+
 
       if (.not. ri) then
          call frmemt(iout, iprint, nbas6d, ngrid, jsym2e, neq,
-     &    neqshl, neqsh2, accdes, irwfac, irwe, v(jend), lenv - jend)
+     &        neqshl, neqsh2, accdes, irwfac, irw2efull, irwe,
+     &        v(jend), lenv - jend)
 
       else
          call frmemtri(iout, iprint, nbasis, ngrid, jsym2e, neq, neqshl,
-     &     neqsh2, ir12, tolinv, accdes, irwfac, irwe, v(jend),
-     &     lenv - jend)
+     &        neqsh2, ir12, tolinv, accdes, ndbf6d, irwfac,
+     &        irwria, irwrib, irwe, v(jend), lenv - jend)
       endif
       
 C-----------------------------------------------------------------------------+
@@ -298,7 +322,7 @@ C-----------------------------------------------------------------------------+
       call frmz(iout, iprint, ngrid, irwspo, irwe, irwz, v(jend), lenv
      & - jend) 
 
-      dbg = .true. 
+      dbg = .false. 
       if (dbg) then
          call fileio(2,-irwfac,nbasis*ngrid,v(jend),0)
          dims(1) = nbasis
@@ -321,10 +345,6 @@ C-----------------------------------------------------------------------------+
 
       tests = .true.
       if (tests) then
-         if (ri) then
-            call frm2eints (iout, iprint, jsym2e, neq, neqshl, neqsh2,
-     &           accdes, .false., jj, irw2efull, v(jend), lenv)
-         endif
          
          froful=normfro(iout, iprint, nbasis, irw2efull, v(jend), lenv)
          
@@ -336,15 +356,22 @@ C-----------------------------------------------------------------------------+
  1100    format(A,I20)
  1200    format(A,E20.12)
          
+         outbuf(1) = dble(nbasis)
+         outbuf(2) = dble(ngrid)
+         outbuf(3) = froful
+         outbuf(4) = frodiff
+         
+         call outcsv (iout, 'summary.csv', 2, 4, outbuf)
+                  
          write (iout, 1100) ' nbasis = ', nbasis
          write (iout, 1100) ' ngrid = ', ngrid
          write (iout, 1200) ' full = ', froful
          write (iout, 1200) ' diff = ', frodiff
-
-         call outoctfmt(iout, 'norm.mat', 1, 'nbasis',1,1,dble(nbasis))
-         call outoctfmt(iout, 'norm.mat', 2, 'ngrid',1,1,dble(ngrid))
-         call outoctfmt(iout, 'norm.mat', 2, 'full', 1, 1, froful)
-         call outoctfmt(iout, 'norm.mat', 2, 'diff', 1, 1, frodiff)
+         write (iout, 1100) ' ndbf = ', ndbf6d
+C         call outoctfmt(iout, 'norm.mat', 1, 'nbasis',1,1,dble(nbasis))
+C         call outoctfmt(iout, 'norm.mat', 2, 'ngrid',1,1,dble(ngrid))
+C         call outoctfmt(iout, 'norm.mat', 2, 'full', 1, 1, froful)
+C         call outoctfmt(iout, 'norm.mat', 2, 'diff', 1, 1, frodiff)
          
       endif
 

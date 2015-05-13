@@ -26,10 +26,10 @@
               jblksz = blksz
            endif
 
-           call fileio (2, -irw1, jblksz*nbsq, v(jblock1), ii*blksz) 
-           call fileio (2, -irw2, jblksz*nbsq, v(jblock2), ii*blksz) 
+           call fileio (2, -irw1, jblksz*nbsq, v(jblock1),ii*blksz*nbsq) 
+           call fileio (2, -irw2, jblksz*nbsq, v(jblock2),ii*blksz*nbsq) 
            call daxpy (jblksz*nbsq,-1.0d0,v(jblock1),1,v(jblock2),1)
-           call fileio (1, -irw2, jblksz*nbsq, v(jblock2), ii*blksz) 
+           call fileio (1, -irw2, jblksz*nbsq, v(jblock2),ii*blksz*nbsq) 
  100  continue
          
 

@@ -1,5 +1,5 @@
       subroutine frmemt(iout, iprint, nbasis, ngrid, jsym2e, neq,
-     &     neqshl, neqsh2, accdes, irwfac, irwe, v, lenv)
+     &     neqshl, neqsh2, accdes, irwfac, irw2efull, irwe, v, lenv)
 
       implicit none
 
@@ -45,6 +45,7 @@ C     [in]  neq, neqshl, neqs2 - symmetry related RWFs from Gaussian
 C     [in]  accdes             - desired accuracy from PRISM
 C     ----------------------
 C     [in]  irwfac             - RWF with quadratures
+C     [out] irw2efull          - RWF with 2e integrals
 C     [out] irwe               - RWF with E matrices 
 C
 
@@ -55,7 +56,7 @@ C     Arguments
       
       integer    jsym2e, neq, neqshl, neqsh2
       real*8     accdes
-      integer    irwfac, irwe
+      integer    irwfac, irwe, irw2efull
 
 C     Pointers and sizes
 
@@ -76,7 +77,7 @@ C     other
 
       logical    keepints
 
-      integer    irw2efull
+C      integer    irw2efull
       
 C     functions
       
@@ -93,10 +94,11 @@ C     functions
 C---------------------------------------------------+      
 C     Compute integrals                             |
 C---------------------------------------------------+
-      
-      call frm2eints (iout, iprint, jsym2e, neq, neqshl, 
-     &     neqsh2, accdes, keepints, next, irw2efull, v(jend),
-     & lenv-jend)
+
+      keepints = .false.
+C      call frm2eints (iout, iprint, jsym2e, neq, neqshl, 
+C     &     neqsh2, accdes, .false., next, irw2efull, v(jend),
+C     & lenv-jend)
 
       if (keepints) then
          j2eint = jend

@@ -1,5 +1,7 @@
       subroutine frmemtri(iout, iprint, nbasis, ngrid, jsym2e, neq,
-     &     neqshl, neqsh2, ir12, tolinv, accdes, irwfac, irwe, v, lenv)
+     &     neqshl, neqsh2, ir12, tolinv, accdes, ndbf6d,
+     &     irwfac, irwria, irwrib,
+     &     irwe, v, lenv)
 
       implicit none
       
@@ -106,9 +108,11 @@ C---------------------------------------------------+
 C     Compute integrals                             |
 C---------------------------------------------------+
 
-      call frm2eri (iout, iprint, jsym2e, neq, neqshl, 
-     &     neqsh2, ir12, keepov, keepints, tolinv, accdes, jovoff,
-     &     next, irwria, irwrib, v(jend), lenv - jend)
+      keepov   = .false.
+      keepints = .false.
+C      call frm2eri (iout, iprint, jsym2e, neq, neqshl, 
+C     &     neqsh2, ir12, keepov, keepints, tolinv, accdes, jovoff,
+C     &     next, irwria, irwrib, v(jend), lenv - jend)
 
 C     Allocate files for half projected integrals and half projected integrals times overlap 
       irwric = igetrw (ngrid*ndbf6d, 0)
@@ -117,6 +121,11 @@ C     Allocate files for half projected integrals and half projected integrals t
       if (keepov) then
          jov    = jend
          jend   = jend + jovoff
+      else
+         jov    = jend
+         jend   = jov  + ndbf6d*ndbf6d
+         call   tstcor (jend-1, lenv, 'frmemtri: overlap')
+         call   fileio (2, -irwria, ndbf6d*ndbf6d, v(jov), 0)
       endif
 
       if (keepints) then
@@ -134,8 +143,7 @@ C     Memory allocation
       jebuf  = jscr   + lenscr
       jend   = jebuf  + lenebuf
 
-      write (iout, *) 'blah from frmemt'
-      call tstcor (jend-1, lenv, 'frmemt: memory allocation')
+      call tstcor (jend-1, lenv, 'frmemtri: memory allocation')
 
 C     Allocate RWF for the E matrix
       

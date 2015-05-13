@@ -241,7 +241,7 @@ C     save integrals
 
 C     Debug printing
 
-      dbg = .true.
+      dbg = .false.
 
       if (dbg) then
          dims(1) = nbasis

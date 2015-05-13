@@ -34,10 +34,12 @@ all: l325.exe
 MAIN325 = ml325.o
 
 OBJ325 =  asubf.o atquadwrt.o cpd2int.o ctrmemest1.o ctrmemest2.o frm2eints.o frm2eri.o frmemt.o frmemtri.o frmquad.o frmria.o frmrib.o frmspovinv.o \
-	  frmz.o normfro.o outoctfmt.o reconstr.o updmatf.o
+	  frmz.o normfro.o outcsv.o outoctfmt.o reconstr.o updmatf.o
 
-l325.exe: $(MAIN325) $(OBJ325) 
-	$(FC0) -g -o l325.exe $(MAIN325) $(OBJ325) $(NUTIL) \
+OBJGAU = numin3.o
+
+l325.exe: $(MAIN325) $(OBJ325) $(OBJGAU)
+	$(FC0) -g -o l325.exe $(MAIN325) $(OBJ325) $(OBJGAU) $(NUTIL) \
 	$(LAPext) $(FC1) $(BLAS)
 	chmod o-rx l325.exe
 
