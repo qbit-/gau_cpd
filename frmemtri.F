@@ -1,5 +1,5 @@
       subroutine frmemtri(iout, iprint, nbasis, ngrid, jsym2e, neq,
-     &     neqshl, neqsh2, ir12, tolinv, accdes, ndbf6d,
+     &     neqshl, neqsh2, ir12, tolinv, accdes, ndbf,
      &     irwfac, irwria, irwrib,
      &     irwe, v, lenv)
 
@@ -69,7 +69,7 @@ C     Pointers and sizes
 
 C     other
 
-      integer    nbasis, nbsq, ngrid, ndbf, ndbf6d
+      integer    nbasis, nbsq, ngrid, ndbf
       integer    numkl, nump, numq
       integer    jnumkl, jnuml, jnumk, jnump, jnumq
       integer    jk, jl, jp, jq 
@@ -92,10 +92,9 @@ C     Load /B2/ with the density basis.
 
       call rdwrb(-10,0)
       
-C     Figure out NDBF and NDBF6D.
+C     Figure out NDBF
 
       call getmbn(I5DB2,I7FB2,NShelB,ShelTB,ShelCB,ndbf)
-      call getmbn(1,1,NShelB,ShelTB,ShelCB,ndbf6d)
 
       jend   = 1 
       nbsq   = nbasis*nbasis
@@ -115,17 +114,17 @@ C     &     neqsh2, ir12, keepov, keepints, tolinv, accdes, jovoff,
 C     &     next, irwria, irwrib, v(jend), lenv - jend)
 
 C     Allocate files for half projected integrals and half projected integrals times overlap 
-      irwric = igetrw (ngrid*ndbf6d, 0)
-      irwrid = igetrw (ngrid*ndbf6d, 0)
+      irwric = igetrw (ngrid*ndbf, 0)
+      irwrid = igetrw (ngrid*ndbf, 0)
       
       if (keepov) then
          jov    = jend
          jend   = jend + jovoff
       else
          jov    = jend
-         jend   = jov  + ndbf6d*ndbf6d
+         jend   = jov  + ndbf*ndbf
          call   tstcor (jend-1, lenv, 'frmemtri: overlap')
-         call   fileio (2, -irwria, ndbf6d*ndbf6d, v(jov), 0)
+         call   fileio (2, -irwria, ndbf*ndbf, v(jov), 0)
       endif
 
       if (keepints) then
@@ -158,8 +157,8 @@ C     Top of the contraction loop
 C     Ugly stepsize computation. We always round to whole counts 
 C     of L index if possible
       
-        if (jkl + numkl .gt. ndbf6d) then
-           jnumkl = (ndbf6d - jkl)
+        if (jkl + numkl .gt. ndbf) then
+           jnumkl = (ndbf - jkl)
         else
            jnumkl = numkl
         endif
@@ -207,13 +206,13 @@ C
  220          continue
  210       continue
    
-           call updmatf (iout, iprint, ndbf6d, jkl, jnumkl, ngrid, 
+           call updmatf (iout, iprint, ndbf, jkl, jnumkl, ngrid, 
      &      jp, jnump, v(jfbuf), irwric, 0, v(jscr), lenscr)
            
  200    continue
            
         jkl = jkl + jnumkl
-        if (jkl .lt. ndbf6d) goto 100
+        if (jkl .lt. ndbf) goto 100
 C     end of the contraction loop
 
 C     Form A(L, Q) = S(L, M)^(-1) * F(M, Q)
@@ -225,12 +224,12 @@ C     Form A(L, Q) = S(L, M)^(-1) * F(M, Q)
               jnump = nump
            endif
            
-           ioff  = jp*ndbf6d
-           ldlen = jnump*ndbf6d
+           ioff  = jp*ndbf
+           ldlen = jnump*ndbf
            
            call fileio (2, -irwric, ldlen, v(jxbufp), ioff)  
-           call dgemm ('n', 'n', ndbf6d, jnump, ndbf6d, 1.0d0,
-     & v(jov), ndbf6d, v(jfbuf), ndbf6d, 0.0d0, v(jscr), ndbf6d)
+           call dgemm ('n', 'n', ndbf, jnump, ndbf, 1.0d0,
+     & v(jov), ndbf, v(jfbuf), ndbf, 0.0d0, v(jscr), ndbf)
            call fileio (1, -irwrid, ldlen, v(jscr), ioff)
 
  300    continue
@@ -243,8 +242,8 @@ C     Block matrix multiplication to form E(P, Q) =  F(P, L) * A(L, Q)
               jnump = nump
            endif
            
-           ioff  = jp*ndbf6d
-           ldlen = jnump*ndbf6d
+           ioff  = jp*ndbf
+           ldlen = jnump*ndbf
            
            call fileio (2, -irwric, ldlen, v(jxbufp), ioff)
 
@@ -255,13 +254,13 @@ C     Block matrix multiplication to form E(P, Q) =  F(P, L) * A(L, Q)
                  jnumq = numq
               endif
               
-              ioff  = jq*ndbf6d
-              ldlen = jnumq*ndbf6d
+              ioff  = jq*ndbf
+              ldlen = jnumq*ndbf
 
               call fileio (2, -irwrid, ldlen, v(jxbufq), ioff)
 
-              call dgemm ('t', 'n', jnump, jnumq, ndbf6d, 1.0d0,
-     &    v(jxbufp), ndbf6d, v(jxbufq), ndbf6d, 0.0d0, v(jebuf), jnump)  
+              call dgemm ('t', 'n', jnump, jnumq, ndbf, 1.0d0,
+     &    v(jxbufp), ndbf, v(jxbufq), ndbf, 0.0d0, v(jebuf), jnump)  
 
               call updmatf (iout, iprint, ngrid, jp, jnump, ngrid, jq,
      &    jnumq, v(jebuf), irwe, 1, v(jscr), lenscr)

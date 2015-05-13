@@ -74,11 +74,11 @@ C     Fix AOS in /B/ as FoFCou converted it back to pure.
 C      (P|m,n) -> (m,n|P)
       Call TrCor1(1,1,NBSq6D,NDBF,3,V(jBAO),XX,XX,V(jXTmp),XX,XX,
      $     .False.,XX,XX)
-      Call Amove(NDBF6D*NBSq6D, V(jXTmp), V(jBAO))
+      Call Amove(NDBF*NBSq6D, V(jXTmp), V(jBAO))
       
 C     Allocate the B file and save integrals if requested
       if(.not. keep) then
-         LenRWB = NDBF6D*NBSq6D
+         LenRWB = NDBF*NBSq6D
          IRwRIB = IGetRW(LenRWB,0)
          Call FileIO(1,-irwrib,NDBF*NBSq6D,V(jBAO),0)
       endif
