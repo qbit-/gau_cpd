@@ -61,7 +61,7 @@ C     prism variables
 
 C     other
 
-      integer     jend, j2eint, jscr, junk
+      integer     jend, j2eint, jscr, junk, jj
       integer     len2eint
       integer     ls, ntt, ntt2, nbsq, nbas6d   
 
@@ -79,7 +79,8 @@ C     constants
       complex*16  cone
       parameter ( two = 2.0d0, half = 0.5d0 )
       parameter ( cone = (1.0d0, 0.0d0) )
-
+      parameter ( jj = 0, xx = 0.0d0 )
+      
 C     debug
       
       integer     i, j, k, l
@@ -91,7 +92,7 @@ C     Memory allocation
       jend = 1
 
       ntt  = (nbasis*(nbasis + 1))/2
-C      ntt2 = (ntt*(ntt+1))/2
+      ntt2 = (ntt*(ntt+1))/2
       nbsq = nbasis*nbasis
       call getnb6(nbas6d)
 
@@ -202,38 +203,35 @@ C     turn off symmetry
 C     no idea what it is (set according l906)
       nbti   = 0
       
-        call fofcou(iout,iprtf,ihmeth,iopcl,icntrl,iraf,nomega,
-     &  omega,fmm,fmflag,fmflg1,nfxflg,ipflag,allowp,lseall,lseall,
-     &  junk,junk,.false.,.false.,.false.,.false.,.false.,i1cent,accdes,
+      call aclear (nbsq*nbsq, v(j2eint))
+      
+      call fofcou(iout,iprtf,ihmeth,iopcl,icntrl,iraf,nomega,
+     &  omega,fmm,fmflag,fmflg1,nfxflg,ipflag,allowp,lseall,xx,
+     &  0,0,.false.,.false.,.false.,.false.,.false.,i1cent,accdes,
      &  cone,0,1,1,0,1,0,0,nbasis,
      &  jsym2e,nopuse,nop1,v(ineq),v(ineqsh),v(ineqs2),rotall,neqall,
      &  nbti,junk,xx,
      &  xx,xx,xx,xx,xx,xx,xx,xx,junk,xx,xx,junk,
      &  xx,xx,natoms,ian,atmchg,c,iattyp,iatfrg,xx,xx,v(jpbcsta),
-     &  celvec,cxx,cone,v(j2eint),junk,junk,xx,xx,junk,
+     &  celvec,cxx,cone,v(j2eint),0,0,xx,xx,junk,
      &  junk,xx,v(jend),v(jend),lenv-jend+1)
 
-C     Put integrals in a square order and also restore 
-C     1/2 factors which PRISM put for I != J and K != L
-
-        call square (v(j2eint), v(j2eint), nbsq, ntt, 0)
-
-        do 100 ls = 1, ntt
-           call square (v(j2eint+(ls-1)*nbsq),v(j2eint+(ls-1)*nbsq),
-     &          nbasis,nbasis,0)
-           call dscal (nbsq, two, v(j2eint+(ls-1)*nbsq), 1)
-           call dscal (nbasis, half, v(j2eint+(ls-1)*nbsq), nbasis+1)
- 100    continue
-
-        call trspn2 (nbsq,v(j2eint))
+C     Unfold integrals in a square order
         
-        do 200 ls = 1, nbsq
-           call square (v(j2eint+(ls-1)*nbsq),v(j2eint+(ls-1)*nbsq),
-     &          nbasis,nbasis,0)
-           call dscal (nbsq, two, v(j2eint+(ls-1)*nbsq), 1)
-           call dscal (nbasis, half, v(j2eint+(ls-1)*nbsq), nbasis+1)
- 200    continue
+      call square (v(j2eint), v(j2eint), nbsq, ntt, 0)
+      
+      do 100 ls = 0, ntt - 1
+         call square (v(j2eint+ls*nbsq),v(j2eint+ls*nbsq),
+     &        nbasis,nbasis,0)
+ 100  continue
 
+      call trspn2 (nbsq,v(j2eint))
+      
+      do 200 ls = 0, nbsq - 1
+         call square (v(j2eint+ls*nbsq),v(j2eint+ls*nbsq),
+     &        nbasis,nbasis,0)
+ 200  continue
+      
 C     save integrals
 
         if (.not. keepints) call fileio (1, -irw2efull, len2eint,
@@ -241,7 +239,7 @@ C     save integrals
 
 C     Debug printing
 
-      dbg = .false.
+      dbg = .true.
 
       if (dbg) then
          dims(1) = nbasis
@@ -253,4 +251,4 @@ C     Debug printing
      &        v(j2eint))
       endif
 
-      end
+        end

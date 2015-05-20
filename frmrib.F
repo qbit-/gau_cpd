@@ -38,7 +38,7 @@ C     Allocate memory.
       jBAO   = 1
       jXTmp  = jBAO  + NDBF6D*NBSq6D
       jEnd   = jXTmp + NDBF6D*NBSq6D
-      write (iout, *) 'ndbf6d', ndbf6d, 'nbsq6d', nbsq6d, jend
+
       Call TstCor(jEnd,MDV,'frmrib')
 
       if ( keep ) then

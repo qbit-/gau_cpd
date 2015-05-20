@@ -35,11 +35,13 @@ C     functions
       
  1000 format ('# Created by Octave ')
  1001 format ('# name: ', A)
- 1010 format ('# type: scalar')
  1002 format ('# type: matrix')
  1003 format ('# ndims: ', I3)
  1004 format (' ',I6,$)
  1005 format (' ',E22.16)
+ 1010 format ('# type: scalar')
+ 1020 format ('# rows: ', I3)
+ 1030 format ('# columns: ', I3)
       
       blank = ' '
       lstr1 = Max(LinEnd(filenm),1)
@@ -69,8 +71,18 @@ C     functions
       if (mode .eq. 1 .or. .not. exist) write (fhandle, 1000)
       
       write (fhandle, 1001) name(1:lstr2)
-      if (ndims .eq. 1 .and. dims(1) .eq. 1) then
-         write (fhandle, 1010)
+      if (ndims .eq. 1) then
+         if (dims(1) .eq. 1) then
+            write (fhandle, 1010)
+         else
+            write (fhandle, 1002)
+            write (fhandle, 1020) dims(1)
+            write (fhandle, 1030) 1
+         endif
+      elseif (ndims .eq. 2) then
+            write (fhandle, 1002)
+            write (fhandle, 1020) dims(1)
+            write (fhandle, 1030) dims(2)         
       else      
          write (fhandle, 1002)
          write (fhandle, 1003) ndims
