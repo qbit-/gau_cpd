@@ -79,10 +79,12 @@ C     functions
             write (fhandle, 1020) dims(1)
             write (fhandle, 1030) 1
          endif
-      elseif (ndims .eq. 2) then
-            write (fhandle, 1002)
-            write (fhandle, 1020) dims(1)
-            write (fhandle, 1030) dims(2)         
+c$$$         Broken - octave reads by lines in a C-style, and then only reshapes data
+c$$$         to specified dimension. Therefore we have to use general format even for matrices
+c$$$      elseif (ndims .eq. 2) then
+c$$$            write (fhandle, 1002)
+c$$$            write (fhandle, 1020) dims(1)
+c$$$            write (fhandle, 1030) dims(2)         
       else      
          write (fhandle, 1002)
          write (fhandle, 1003) ndims
