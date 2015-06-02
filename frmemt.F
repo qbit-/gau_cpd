@@ -223,7 +223,7 @@ C     THIS PART WILL FAIL IF L=1, K<NBASIS
  200    continue
 
         jk = mod(jk + jnumk, nbasis)
-        jl = mod(jl + jnumkl/nbasis, nbasis)
+        jl = mod(jl + jnuml, nbasis)
         
         jkl = jkl + jnumkl
         if (jkl .lt. nbsq - 1) goto 100

@@ -202,9 +202,7 @@ C     turn off symmetry
       
 C     no idea what it is (set according l906)
       nbti   = 0
-      
-      call aclear (nbsq*nbsq, v(j2eint))
-      
+            
       call fofcou(iout,iprtf,ihmeth,iopcl,icntrl,iraf,nomega,
      &  omega,fmm,fmflag,fmflg1,nfxflg,ipflag,allowp,lseall,xx,
      &  0,0,.false.,.false.,.false.,.false.,.false.,i1cent,accdes,
@@ -217,7 +215,8 @@ C     no idea what it is (set according l906)
      &  junk,xx,v(jend),v(jend),lenv-jend+1)
 
 C     Unfold integrals in a square order
-        
+      call aclear (nbsq*nbsq - ntt2, v(j2eint + ntt2))
+      
       call square (v(j2eint), v(j2eint), nbsq, ntt, 0)
       
       do 100 ls = 0, ntt - 1
