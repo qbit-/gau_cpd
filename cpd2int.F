@@ -308,7 +308,7 @@ C-----------------------------------------------------------------------------+
          call frmemt(iout, iprint, nbas6d, ngrid, jsym2e, neq,
      &        neqshl, neqsh2, accdes, irwfac, irw2efull, irwe,
      &        v(jend), lenv - jend)
-
+         
       else
          call frmemtri(iout, iprint, nbasis, ngrid, jsym2e, neq, neqshl,
      &        neqsh2, ir12, tolinv, accdes, ndbf6d, irwfac,
@@ -322,7 +322,7 @@ C-----------------------------------------------------------------------------+
       call frmz(iout, iprint, ngrid, irwspo, irwe, irwz, v(jend), lenv
      & - jend) 
 
-      dbg = .false. 
+      dbg = .true. 
       if (dbg) then
          call fileio(2,-irwfac,nbasis*ngrid,v(jend),0)
          dims(1) = nbasis
@@ -368,10 +368,10 @@ C-----------------------------------------------------------------------------+
          write (iout, 1200) ' full = ', froful
          write (iout, 1200) ' diff = ', frodiff
          write (iout, 1100) ' ndbf = ', ndbf6d
-C         call outoctfmt(iout, 'norm.mat', 1, 'nbasis',1,1,dble(nbasis))
-C         call outoctfmt(iout, 'norm.mat', 2, 'ngrid',1,1,dble(ngrid))
-C         call outoctfmt(iout, 'norm.mat', 2, 'full', 1, 1, froful)
-C         call outoctfmt(iout, 'norm.mat', 2, 'diff', 1, 1, frodiff)
+c$$$         call outoctfmt(iout, 'norm.mat', 1, 'nbasis',1,1,dble(nbasis))
+c$$$         call outoctfmt(iout, 'norm.mat', 2, 'ngrid',1,1,dble(ngrid))
+c$$$         call outoctfmt(iout, 'norm.mat', 2, 'full', 1, 1, froful)
+c$$$         call outoctfmt(iout, 'norm.mat', 2, 'diff', 1, 1, frodiff)
          
       endif
 

@@ -1,6 +1,6 @@
       subroutine ctrmemest1(iout, iprint, nbasis, ngrid, keepints, 
-     &     numkl, nump, numq, lenwbuf, lenfbuf, lenxbufp, lenxbufq,
-     &     lenscr, lenebuf, v, lenv) 
+     &     keepx, numkl, nump, numq, lenwbuf, lenfbuf, lenxbufp,
+     &     lenxbufq, lenscr, lenebuf, v, lenv) 
 
       implicit none 
 
@@ -31,7 +31,7 @@ C     Arguments
       integer    numkl, nump, numq
 
       integer    lenwbuf, lenfbuf, lenxbufp, lenxbufq, lenebuf, lenscr
-      logical    keepints
+      logical    keepints, keepx
 
 C     Other
 

@@ -75,7 +75,7 @@ C     other
       integer    ikl, ip, iq, ik, il, ij
       integer    ioff, ldlen
 
-      logical    keepints
+      logical    keepints, keepx
 
 C      integer    irw2efull
       
@@ -87,7 +87,7 @@ C     functions
       jend = 1 
       nbsq = nbasis*nbasis
 
-      call ctrmemest1(iout, iprint, nbasis, ngrid, keepints, 
+      call ctrmemest1(iout, iprint, nbasis, ngrid, keepints, keepx,  
      &     numkl, nump, numq, lenwbuf, lenfbuf, lenxbufp, lenxbufq,
      &     lenscr, lenebuf, v(jend), lenv) 
 
@@ -142,6 +142,7 @@ C     of L index if possible
            jnumkl = jnuml*nbasis
         else
            jnuml  = 1
+           jnumk  = min(jnumkl, nbasis - jk)
            jnumk  = jnumkl
         endif
         
@@ -222,10 +223,10 @@ C     THIS PART WILL FAIL IF L=1, K<NBASIS
  300       continue
  200    continue
 
-        jk = mod(jk + jnumk, nbasis)
-        jl = mod(jl + jnuml, nbasis)
-        
         jkl = jkl + jnumkl
+        jk = mod(jk + jnumk, nbasis)
+        jl = jkl / nbasis
+        
         if (jkl .lt. nbsq - 1) goto 100
 C     end of the contraction loop
 
