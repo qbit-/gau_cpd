@@ -216,7 +216,7 @@ C     with user supplied if available
 C     Desired accuracy and pseudoinversion tolerance for spatial overlap
 
       accdes = decacc (0, 0.0d0, .false.)
-      tolinv = 1.0e-6
+      tolinv = 1.0e-8
       write (iout, 1020) accdes, tolinv
       
 C     Use of symmetry
@@ -305,7 +305,7 @@ C     Project integrals onto the quadrature space                             |
 C-----------------------------------------------------------------------------+
 
       if (.not. ri) then
-         call frmemt(iout, iprint, nbas6d, ngrid, jsym2e, neq,
+         call frmemt_nd(iout, iprint, nbas6d, ngrid, jsym2e, neq,
      &        neqshl, neqsh2, accdes, irwfac, irw2efull, irwe,
      &        v(jend), lenv - jend)
          
