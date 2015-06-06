@@ -1,4 +1,4 @@
-      subroutine frmspovinv (iout, iprint, nbas6d, ngrid, tol,
+      subroutine frmspovinv (iout, iprint, nbasis, ngrid, tol,
      &     irwfac, irwspo, v, lenv)
 
       implicit none
@@ -8,44 +8,39 @@ C     S(P,Q) = ( X(mu,P)^t X(mu,Q) ) o ( X(nu,P)^t X(nu,Q) )
 C     X is stored in the irwfac, s is put into irwspo
 C
 C     Options:
-C     [in] nbas6d - cartesian basis size (dimension of mu)
+C     [in] nbasis - cartesian basis size (dimension of mu)
 C     [in] ngrid  - number of grid points (dimension of P)
 C     [in] tol    - numeric tolerance for the pseudoinverse
 C     [in] irwfac - RWF with quadrature
 C     [out] irwspo - RWF with S^-1 
 
-      integer    iout, iprint, nbas6d, ngrid
+      integer    iout, iprint, nbasis, ngrid
       integer    irwfac, irwspo, lenv
-      real*8     tol, v
+      real*8     tol, v, xx
       dimension  v(*)
 
-      real*8     one, zero
-      parameter  ( one = 1.0d0, zero = 0.0d0)
+      real*8     one, zero, half
+      parameter  ( one = 1.0d0, zero = 0.0d0 )
       
 C     other variables
-      integer    jend, jx, js, jsv, ju, jvt, jscr, ii
-      integer    jscopy, junit
-      integer    lenx, lens, lensv, lenu, lenvt, lenscr
-      integer    info
-      real*8     l(ngrid,ngrid)
-      real*8     r(ngrid,ngrid)
+      integer    jend, jx, js,  jspk, jsv, ju, jscr, ii
+      integer    lenx, lens, lensv, lenu, lenspk, lenscr
+      integer    nrank
+      
 C     define sizes
-      lenx = nbas6d * ngrid
-      lens = ngrid*ngrid
-      lenu = lens
-      lenvt = lens
-      lensv = ngrid
-      lenscr = 8*ngrid
+      lenx   = nbasis * ngrid
+      lens   = ngrid * ngrid
+      lenspk = ngrid * (ngrid + 1) / 2
+      lenu   = lens
+      lensv  = ngrid
       
 C     allocate memory
       jend = 1
       jx   = jend
       js   = jx + lenx
-      jsv  = js + lens
-      ju   = jsv + lensv
-      jvt  = ju + lenu
-      jscr = jvt + lenvt
-      jend = jscr + lenscr
+      ju   = js + lens
+      jsv  = ju + lenu
+      jend = jsv + lensv
       
       call tstcor (jend-1, lenv, 'frmspovinv')
 
@@ -58,45 +53,28 @@ C     form S(P,Q)
       call fileio (2, -irwfac, lenx, v(jx), 0)
 
       if (iprint .gt. 5)  call outmts (iout,'X:', 0,
-     & 0, v(jx), nbas6d, ngrid, nbas6d, ngrid)
+     & 0, v(jx), nbasis, ngrid, nbasis, ngrid)
       
-      call dgemm ( 't', 'n', ngrid, ngrid, nbas6d, one, v(jx), nbas6d,
-     &     v(jx), nbas6d, zero, v(js), ngrid )
+      call aclear (lens, v(js))
+      call dsyrk ('u', 't', ngrid, nbasis, one, v(jx), nbasis,
+     &     zero, v(js), ngrid)
 
+      call linear (v(js), v(js), ngrid, ngrid)
+      
 C     Hadamard square of R^t * R
-      do 10 ii = 1, lens
+      do 10 ii = 1, lenspk
          v(js - 1 + ii) = v(js - 1 + ii)*v(js - 1 + ii)
  10   continue
 
-      if (iprint .gt. 5) call outmts (iout,'S:',0,0,
-     &     v(js),ngrid,ngrid,ngrid,ngrid)
+      if (iprint .gt. 5) call ltoutl (iout,'S:',0, ngrid, 
+     &     v(js))
       
 C     form S(P,Q)^(-1)
-C     svd
-      call dgesdd( 'A', ngrid, ngrid, v(js), ngrid,
-     &     v(jsv), v(ju), ngrid, v(jvt), ngrid, v(jend), lenv-jend,
-     &     v(jscr), info )
 
-C      if (info .ne. 0) call gauerr('LAPACK SVD failed in frmspov')
-
-      do 20 ii = 1, lensv
-          if ( v(jsv - 1 + ii) .gt. tol ) then
-             v(jsv - 1 + ii) = one / v(jsv - 1 + ii)
-          else
-             v(jsv - 1 + ii) = zero
-          endif
-  20   continue
-
-C     s*V^t
-      call ascaln(ngrid,ngrid, v(jsv), v(ju))
-
-C     assemble back
-      call dgemm ( 't', 't', ngrid, ngrid, ngrid, one, v(jvt), ngrid,
-     &     v(ju), ngrid, zero, v(js), ngrid )
+      call geninv(iout,iprint,'S:', 0, tol, ngrid, v(js), v(ju),
+     &     v(jsv), .false., xx, nrank, v(jend), lenv - jend)
       
-      if (iprint .gt. 5)  call outmts (iout,'S^-1:', 0,
-     & 0, v(js), ngrid, ngrid, ngrid, ngrid)
-
+      call square (v(js), v(js), ngrid, ngrid, 0)
 C     save S^-1
       call fileio (1, -irwspo, lens, v(js), 0) 
       
