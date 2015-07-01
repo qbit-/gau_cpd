@@ -85,13 +85,16 @@ C     general array
       real*8      dgen(lengen)
       integer     iopcl
 
-C     general options variables
+C     general option variables
 
       integer     iprint
       integer     iradan, iranwt, irangd, iradanu, iranwtu, irangdu
       integer     iuseri, ir12
 
       logical     ri
+
+      integer     iradandef, iranwtdef, irangddef
+      parameter   ( iradandef = 8012, iranwtdef = -1, irangddef = 0 )
       
 C     memory allocation variables
 
@@ -196,7 +199,7 @@ C     Set printing level.
 C     Set up grid options 
 C     Read grid parameters from ilsw, but substitute 
 C     with user supplied if available
-      
+            
       call ilsw (2, 13, iradan)      
       call ilsw (2, 35, iranwt)
       call ilsw (2, 36, irangd)
@@ -210,13 +213,18 @@ C     with user supplied if available
       irangdu = iop(62)
       if ( irangdu .ne. 0 ) irangd = irangdu
 
+C     Defaults if nothing is set
+      if ( iradan .eq. 0 ) iradan = iradandef
+      if ( iranwt .eq. 0 ) iranwt = iranwtdef
+      if ( irangd .eq. 0 ) irangd = irangddef
+      
       write (iout, 1011)
       write (iout, 1012) iradan, iranwt, irangd
 
 C     Desired accuracy and pseudoinversion tolerance for spatial overlap
 
       accdes = decacc (0, 0.0d0, .false.)
-      tolinv = 1.0e-8
+      tolinv = 1.0e-10
       write (iout, 1020) accdes, tolinv
       
 C     Use of symmetry
@@ -230,7 +238,10 @@ C       does not force the density or Fock matrices to be symmetric.
 C     Use of RI (N^4 scaling algorithm) and related options
 
       iuseri = mod(iop(109), 10)
-      If(iuseri .eq. 1) ri = .true.
+      if(iuseri .eq. 1) then
+         ri = .true.
+         write (iout, 1022)
+      endif
       
 C     Metric to use with RI: 1 - 1/r, 2 - overlap      
       ir12 = mod (iop(109), 100000) / 10000
@@ -322,7 +333,7 @@ C-----------------------------------------------------------------------------+
       call frmz(iout, iprint, ngrid, irwspo, irwe, irwz, v(jend), lenv
      & - jend) 
 
-      dbg = .true. 
+      dbg = .false. 
       if (dbg) then
          call fileio(2,-irwfac,nbasis*ngrid,v(jend),0)
          dims(1) = nbasis
@@ -375,9 +386,9 @@ c$$$         call outoctfmt(iout, 'norm.mat', 2, 'diff', 1, 1, frodiff)
          
       endif
 
-      call chainX (0)
-
-      return
+C      stop
+      call chainx(0)
+      
       end
 
 

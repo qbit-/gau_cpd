@@ -50,13 +50,13 @@ C     get some set of values
 C     X is used in the loop over P and Q
 C     Decide what is bigger - an average O(N^2) integral buffer or the grid size
 
-      if (ngrid/nbasis .lt. 5) then
+      if (ngrid/nbasis .lt. 2*nbasis) then
          keepx = .true.
          nump = ngrid
       else
 C     grid will be loaded by chunks of O(nbasis) size
          keepx = .false.
-         nump = 5*nbasis
+         nump = 2*nbasis
       endif
 
 C     The second thing to consider is an integral buffer
@@ -120,7 +120,9 @@ C     Now check we are not out of boundaries
      &     call gauerr('Insufficient memory in ctrmemest:3')
 
 C     Now assign all sizes
-
+C\\\\\\\\\\\\\\/////////////////////////temporary      
+      keepints = .false.
+C\\\\\\\\\\\\\/////////////////////////
       if (keepints) then
          lenwbuf = 0
       else

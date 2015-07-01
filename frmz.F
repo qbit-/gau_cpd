@@ -55,7 +55,7 @@ c$$$      call dsymm ('l', 'u', ngrid, ngrid, 1.0d0,
 c$$$     &     v(jscr1), ngrid, v(jscr3), ngrid, 0.0d0, 
 c$$$     &     v(jscr2), ngrid)
 c$$$
-c$$$      call fileio (1, -irwz, ngrid*ngrid, v(jscr2), 0)
+      call fileio (1, -irwz, ngrid*ngrid, v(jscr2), 0)
 
       end
       
