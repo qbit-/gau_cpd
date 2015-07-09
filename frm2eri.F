@@ -52,7 +52,7 @@ C     prism variables
 C     other
 
       integer     jend, jria, jrints, junk
-      integer     nbasis, nbas6d, ndbf, ndbf6d   
+      integer     nbas6d, ndbf, ndbf6d   
 
       real*8      tolinv
 C     

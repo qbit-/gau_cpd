@@ -120,9 +120,7 @@ C     Now check we are not out of boundaries
      &     call gauerr('Insufficient memory in ctrmemest:3')
 
 C     Now assign all sizes
-C\\\\\\\\\\\\\\/////////////////////////temporary      
-      keepints = .false.
-C\\\\\\\\\\\\\/////////////////////////
+
       if (keepints) then
          lenwbuf = 0
       else
