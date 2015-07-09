@@ -1,4 +1,3 @@
-
       subroutine cpd2int (v, ngot)
 
       implicit none
@@ -103,7 +102,8 @@ C     memory allocation variables
 C     other variables
 
       integer     nbsq
-      integer     ngrid, nbas6d   
+      integer     ngrid, nbas6d
+      integer     nrank   
       real*8      tolinv, accdes
 
 C     CPD2E RWF files
@@ -148,8 +148,8 @@ C     debug temporary stuff
       
       integer     dims(4)
       integer     jj, irw2efull, irwrec
-      integer     ndbf6d
       integer     irwria, irwrib
+      integer     ndbf6d
       real*8      normfro, froful, frodiff
       real*8      outbuf(4)
       logical     dbg, tests
@@ -241,6 +241,8 @@ C     Use of RI (N^4 scaling algorithm) and related options
       if(iuseri .eq. 1) then
          ri = .true.
          write (iout, 1022)
+      else
+         ri = .false.
       endif
       
 C     Metric to use with RI: 1 - 1/r, 2 - overlap      
@@ -273,14 +275,16 @@ C     Read /mol/
 C     Get 6d basis used with all quadratures
 
       call getnb6(nbas6d)
-
+      if (nbasis .ne. nbas6d)
+     &  call gauerr ('Sperical bases are not supported yet')
+      
       write (iout, *)
       
 C------------------------------------------------------------------------------+
 C     Fixme: frmquad breaks PRISM settings, hence integral formation done first
 C------------------------------------------------------------------------------+     
 
-      tests = .true.
+      tests = .false.
       if (ri .and. tests) then
          call frm2eints (iout, iprint, jsym2e, neq, neqshl, neqsh2,
      &     accdes, .false., jj, irw2efull, v(jend), lenv)
@@ -308,15 +312,15 @@ C-----------------------------------------------------------------------------+
 C     Compute spatial overlap using collocation from irwfac                   |
 C-----------------------------------------------------------------------------+      
 
-      call frmspovinv (iout, iprint, nbas6d, ngrid, tolinv,
-     &     irwfac, irwspo, v(jend), lenv - jend)
+      call frmspovinv (iout, iprint, nbasis, ngrid, tolinv,
+     &     irwfac, nrank, irwspo, v(jend), lenv - jend)
       
 C-----------------------------------------------------------------------------+      
 C     Project integrals onto the quadrature space                             |
 C-----------------------------------------------------------------------------+
 
       if (.not. ri) then
-         call frmemt_nd(iout, iprint, nbas6d, ngrid, jsym2e, neq,
+         call frmemt_nd(iout, iprint, nbasis, ngrid, jsym2e, neq,
      &        neqshl, neqsh2, accdes, irwfac, irw2efull, irwe,
      &        v(jend), lenv - jend)
          
@@ -333,7 +337,7 @@ C-----------------------------------------------------------------------------+
       call frmz(iout, iprint, ngrid, irwspo, irwe, irwz, v(jend), lenv
      & - jend) 
 
-      dbg = .false. 
+      dbg = .true. 
       if (dbg) then
          call fileio(2,-irwfac,nbasis*ngrid,v(jend),0)
          dims(1) = nbasis
@@ -376,9 +380,11 @@ C-----------------------------------------------------------------------------+
                   
          write (iout, 1100) ' nbasis = ', nbasis
          write (iout, 1100) ' ngrid = ', ngrid
+         write (iout, 1100) ' nrank = ', nrank
          write (iout, 1200) ' full = ', froful
          write (iout, 1200) ' diff = ', frodiff
-         write (iout, 1100) ' ndbf = ', ndbf6d
+         write (iout, 1200) ' frac % = ', frodiff / froful * 100
+         if (ri) write (iout, 1100) ' ndbf = ', ndbf6d
 c$$$         call outoctfmt(iout, 'norm.mat', 1, 'nbasis',1,1,dble(nbasis))
 c$$$         call outoctfmt(iout, 'norm.mat', 2, 'ngrid',1,1,dble(ngrid))
 c$$$         call outoctfmt(iout, 'norm.mat', 2, 'full', 1, 1, froful)

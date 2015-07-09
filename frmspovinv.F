@@ -1,5 +1,5 @@
       subroutine frmspovinv (iout, iprint, nbasis, ngrid, tol,
-     &     irwfac, irwspo, v, lenv)
+     &     irwfac, nrank, irwspo, v, lenv)
 
       implicit none
 
@@ -28,8 +28,9 @@ C     other variables
       integer    nrank
       
 C     define sizes
+      
       lenx   = nbasis * ngrid
-      lens   = ngrid * ngrid
+      lens   = ngrid * ngrid 
       lenspk = ngrid * (ngrid + 1) / 2
       lenu   = lens
       lensv  = ngrid
@@ -62,8 +63,8 @@ C     form S(P,Q)
       call linear (v(js), v(js), ngrid, ngrid)
       
 C     Hadamard square of R^t * R
-      do 10 ii = 1, lenspk
-         v(js - 1 + ii) = v(js - 1 + ii)*v(js - 1 + ii)
+      do 10 ii = 0, lenspk - 1
+         v(js + ii) = v(js + ii)*v(js + ii)
  10   continue
 
       if (iprint .gt. 5) call ltoutl (iout,'S:',0, ngrid, 
@@ -74,9 +75,8 @@ C     form S(P,Q)^(-1)
       call geninv(iout,iprint,'S:', 0, tol, ngrid, v(js), v(ju),
      &     v(jsv), .false., xx, nrank, v(jend), lenv - jend)
       
-      call square (v(js), v(js), ngrid, ngrid, 0)
 C     save S^-1
-      call fileio (1, -irwspo, lens, v(js), 0) 
+      call fileio (1, -irwspo, lenspk, v(js), 0) 
       
       return
       end

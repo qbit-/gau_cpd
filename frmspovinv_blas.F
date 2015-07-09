@@ -1,5 +1,5 @@
-      subroutine frmspovinv (iout, iprint, nbas6d, ngrid, tol,
-     &     irwfac, irwspo, v, lenv)
+      subroutine frmspovinv_blas (iout, iprint, nbas6d, ngrid, tol,
+     &     irwfac, nrank, irwspo, v, lenv)
 
       implicit none
 
@@ -12,9 +12,10 @@ C     [in] nbas6d - cartesian basis size (dimension of mu)
 C     [in] ngrid  - number of grid points (dimension of P)
 C     [in] tol    - numeric tolerance for the pseudoinverse
 C     [in] irwfac - RWF with quadrature
+C     [out] nrank - rank of the pseudoinverse
 C     [out] irwspo - RWF with S^-1 
 
-      integer    iout, iprint, nbas6d, ngrid
+      integer    iout, iprint, nbas6d, ngrid, nrank
       integer    irwfac, irwspo, lenv
       real*8     tol, v
       dimension  v(*)
@@ -29,6 +30,10 @@ C     other variables
       integer    info
       real*8     l(ngrid,ngrid)
       real*8     r(ngrid,ngrid)
+
+ 1000 format(' Eigenvalues of S:',/,10(1PD10.2))
+ 1020 format(' SDV returned info=',I12,' to frmspovinv.')
+      
 C     define sizes
       lenx = nbas6d * ngrid
       lens = ngrid*ngrid
@@ -64,8 +69,8 @@ C     form S(P,Q)
      &     v(jx), nbas6d, zero, v(js), ngrid )
 
 C     Hadamard square of R^t * R
-      do 10 ii = 1, lens
-         v(js - 1 + ii) = v(js - 1 + ii)*v(js - 1 + ii)
+      do 10 ii = 0, lens - 1
+         v(js + ii) = v(js + ii)*v(js + ii)
  10   continue
 
       if (iprint .gt. 5) call outmts (iout,'S:',0,0,
@@ -73,17 +78,29 @@ C     Hadamard square of R^t * R
       
 C     form S(P,Q)^(-1)
 C     svd
+      info = 0
       call dgesdd( 'A', ngrid, ngrid, v(js), ngrid,
      &     v(jsv), v(ju), ngrid, v(jvt), ngrid, v(jend), lenv-jend,
      &     v(jscr), info )
 
-C      if (info .ne. 0) call gauerr('LAPACK SVD failed in frmspov')
+      if ( info .ne. 0 ) then
+         write (iout,1020) info
+         call gauerr('SVD failed for GenInv.')
+      endIf
+      
+      if (info .ne. 0) call gauerr('LAPACK SVD failed in frmspov')
 
-      do 20 ii = 1, lensv
-          if ( v(jsv - 1 + ii) .gt. tol ) then
-             v(jsv - 1 + ii) = one / v(jsv - 1 + ii)
+      if (iprint .ge. 2) then
+         write (iout, 1000) (v(js+ii), ii=1,lensv-1) 
+      endif
+      
+      nrank = 0
+      do 20 ii = 0, lensv - 1 
+          if ( v(jsv + ii) .gt. tol ) then
+             v(jsv + ii) = one / v(jsv + ii)
+             nrank = nrank + 1
           else
-             v(jsv - 1 + ii) = zero
+             v(jsv + ii) = zero
           endif
   20   continue
 

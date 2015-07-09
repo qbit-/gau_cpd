@@ -63,7 +63,7 @@ C     other
 
       integer     jend, j2eint, jscr, junk, jj
       integer     len2eint
-      integer     ls, ntt, ntt2, nbsq, nbas6d   
+      integer     ls, ntt, ntt2, nbsq  
 
       character*20 chap
       real*8      xx
@@ -94,7 +94,6 @@ C     Memory allocation
       ntt  = (nbasis*(nbasis + 1))/2
       ntt2 = (ntt*(ntt+1))/2
       nbsq = nbasis*nbasis
-      call getnb6(nbas6d)
 
 C     allocate memory for integrals. For an easy setup for PRISM see l906
 
@@ -238,7 +237,7 @@ C     save integrals
 
 C     Debug printing
 
-      dbg = .false.
+      dbg = .true.
 
       if (dbg) then
          dims(1) = nbasis

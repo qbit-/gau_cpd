@@ -6,8 +6,8 @@ NUTIL=$(GAU_DIR)/util.a
 
 MKLPATH = /opt/intel/composerxe-2015.0.090/mkl/lib/intel64
 MKLINCLUDE = /opt/intel/composerxe-2015.0.090/mkl/include
-PROFFLAG = -O0
-FC0 = pgf77
+PROFFLAG = -Mprof=func  
+FC0 = pgf77 -g
 #FC0 = pgf90 -Wl,-z,muldefs
 #FC2 = -Wl"-M /dev/null -D DUPENTRY=NOTE -D FORCE=OFF -f indef"
 
@@ -33,13 +33,13 @@ all: l325.exe
 
 MAIN325 = ml325.o
 
-OBJ325 =  asubf.o atquadwrt.o cpd2int.o ctrmemest1.o ctrmemest_nd.o ctrmemest2.o frm2eints.o frm2eri.o frmemt.o frmemt_nd.o frmemtri.o frmquad.o frmria.o frmrib.o frmspovinv.o \
+OBJ325 =  asubf.o atquadwrt.o cpd2int.o ctrmemest1.o ctrmemest_nd.o ctrmemest2.o frm2eints.o frm2eri.o frmemt.o frmemt_nd.o frmemtri.o frmquad.o frmria.o frmrib.o frmspovinv.o frmspovinv_blas.o\
 	  frmz.o normfro.o outcsv.o outoctfmt.o reconstr.o updmatf.o
 
 OBJGAU = numin3.o
 
 l325.exe: $(MAIN325) $(OBJ325) $(OBJGAU)
-	$(FC0) -g -o l325.exe $(MAIN325) $(OBJ325) $(OBJGAU) $(NUTIL) \
+	$(FC0) $(PROFFLAG) -o l325.exe $(MAIN325) $(OBJ325) $(OBJGAU) $(NUTIL) \
 	$(LAPext) $(FC1) $(BLAS)
 	chmod o-rx l325.exe
 

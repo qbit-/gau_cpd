@@ -26,35 +26,35 @@ C     Arguments:
 C     Other
 
       integer    jend, jscr1, jscr2, jscr3 
+      integer    ngsq, ngtt
+
+C     Define sizes
+      
+      ngsq = ngrid*ngrid
+      ngtt = ngrid*(ngrid + 1) / 2 
 
       jend = 1
       jscr1 = jend 
-      jscr2 = jscr1 + ngrid*ngrid
-      jscr3 = jscr2 + ngrid*ngrid
-      jend  = jscr3 + ngrid*ngrid
+      jscr2 = jscr1 + ngsq
+      jscr3 = jscr2 + ngsq
+      jend  = jscr3 + ngsq
 
       call tstcor (jend, lenv, 'frmz')
       call conddf (irwz, ngrid*ngrid)
       
-      call fileio (2, -irwspo, ngrid*ngrid, v(jscr1), 0)
+      call fileio (2, -irwspo, ngtt, v(jscr1), 0)
+      call square (v(jscr1), v(jscr1), ngrid, ngrid, 0)
+
       call fileio (2, -irwe, ngrid*ngrid, v(jscr2), 0)
 
-      call dgemm ('n', 'n', ngrid, ngrid, ngrid, 1.0d0,  
-     & v(jscr1), ngrid, v(jscr2), ngrid, 0.0d0, 
+      call dsymm ('l', 'u', ngrid, ngrid, 1.0d0,
+     &     v(jscr1), ngrid, v(jscr2), ngrid, 0.0d0, 
      &     v(jscr3), ngrid)
 
-      call dgemm ('n', 'n', ngrid, ngrid, ngrid, 1.0d0,  
-     & v(jscr3), ngrid, v(jscr1), ngrid, 0.0d0, 
+      call dsymm ('r', 'u', ngrid, ngrid, 1.0d0,  
+     &     v(jscr1), ngrid, v(jscr3), ngrid, 0.0d0, 
      &     v(jscr2), ngrid)
 
-c$$$      call dsymm ('l', 'u', ngrid, ngrid, 1.0d0,
-c$$$     &     v(jscr1), ngrid, v(jscr2), ngrid, 0.0d0, 
-c$$$     &     v(jscr3), ngrid)
-c$$$
-c$$$      call dsymm ('l', 'u', ngrid, ngrid, 1.0d0,  
-c$$$     &     v(jscr1), ngrid, v(jscr3), ngrid, 0.0d0, 
-c$$$     &     v(jscr2), ngrid)
-c$$$
       call fileio (1, -irwz, ngrid*ngrid, v(jscr2), 0)
 
       end
