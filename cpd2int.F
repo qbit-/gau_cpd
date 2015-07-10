@@ -284,22 +284,16 @@ C------------------------------------------------------------------------------+
 C     Fixme: frmquad breaks PRISM settings, hence integral formation done first
 C------------------------------------------------------------------------------+     
 
-      tests = .false.
-      if (ri .and. tests) then
-         call frm2eints (iout, iprint, jsym2e, neq, neqshl, neqsh2,
-     &     accdes, .false., jj, irw2efull, v(jend), lenv)
-      endif         
-
-      if (.not. ri) then
-         call frm2eints (iout, iprint, jsym2e, neq, neqshl, neqsh2,
-     &     accdes, .false., jj, irw2efull, v(jend), lenv)
-
-      else
-         call frm2eri (iout, iprint, jsym2e, neq, neqshl, 
-     &        neqsh2, ir12, .false., .false., tolinv, accdes, jj,
-     &        jj, irwria, irwrib, v(jend), lenv - jend)
-
-      endif
+c$$$      if (.not. ri) then
+c$$$         call frm2eints (iout, iprint, jsym2e, neq, neqshl, neqsh2,
+c$$$     &     accdes, .false., jj, irw2efull, v(jend), lenv)
+c$$$
+c$$$      else
+c$$$         call frm2eri (iout, iprint, jsym2e, neq, neqshl, 
+c$$$     &        neqsh2, ir12, .false., .false., tolinv, accdes, jj,
+c$$$     &        jj, irwria, irwrib, v(jend), lenv - jend)
+c$$$
+c$$$      endif
 
 C-----------------------------------------------------------------------------+
 C     Compute the collocation matrix X(mu,G) and save it to the RWF irwfac    |
@@ -360,6 +354,8 @@ C-----------------------------------------------------------------------------+
 
       tests = .true.
       if (tests) then
+         call frm2eints (iout, iprint, jsym2e, neq, neqshl, neqsh2,
+     &     accdes, .false.,.true., jj, irw2efull, v(jend), lenv)
          
          froful=normfro(iout, iprint, nbasis, irw2efull, v(jend), lenv)
          
@@ -385,14 +381,8 @@ C-----------------------------------------------------------------------------+
          write (iout, 1200) ' diff = ', frodiff
          write (iout, 1200) ' frac % = ', frodiff / froful * 100
          if (ri) write (iout, 1100) ' ndbf = ', ndbf6d
-c$$$         call outoctfmt(iout, 'norm.mat', 1, 'nbasis',1,1,dble(nbasis))
-c$$$         call outoctfmt(iout, 'norm.mat', 2, 'ngrid',1,1,dble(ngrid))
-c$$$         call outoctfmt(iout, 'norm.mat', 2, 'full', 1, 1, froful)
-c$$$         call outoctfmt(iout, 'norm.mat', 2, 'diff', 1, 1, frodiff)
-         
       endif
 
-C      stop
       call chainx(0)
       
       end

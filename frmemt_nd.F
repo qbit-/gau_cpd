@@ -91,13 +91,12 @@ C---------------------------------------------------+
 C     Compute integrals                             |
 C---------------------------------------------------+
 
-      keepints = .false.
-
 C     Load required quantities if we keep them in memory
 
       if (keepints) then
+         j2eint = jend
          call frm2eints (iout, iprint, jsym2e, neq, neqshl, 
-     &     neqsh2, accdes, .false., next, irw2efull, v(j2eint),
+     &     neqsh2, accdes, keepints,.false., next, irw2efull, v(j2eint),
      & lenv-jend)
          jend = jend + next
       endif

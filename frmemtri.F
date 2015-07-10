@@ -107,11 +107,9 @@ C---------------------------------------------------+
 C     Compute integrals                             |
 C---------------------------------------------------+
 
-      keepov   = .false.
-      keepints = .false.
-C      call frm2eri (iout, iprint, jsym2e, neq, neqshl, 
-C     &     neqsh2, ir12, keepov, keepints, tolinv, accdes, jovoff,
-C     &     next, irwria, irwrib, v(jend), lenv - jend)
+      call frm2eri (iout, iprint, jsym2e, neq, neqshl, 
+     &     neqsh2, ir12, keepov, keepints, tolinv, accdes, jovoff,
+     &     next, irwria, irwrib, v(jend), lenv - jend)
 
 C     Allocate files for half projected integrals and half projected integrals times overlap 
       irwric = igetrw (ngrid*ndbf, 0)

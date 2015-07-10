@@ -27,7 +27,8 @@ LAPext = -L$(MKLPATH) -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread
 	PROFFLAG='$(PROFFLAG)' $*.lo
 
 all: l325.exe
-	gdv run/testri.gjf && tail -40 run/testri.log
+	gdv run/testri.gjf
+	tail -40 run/testri.log
 
 # = link 325 =
 

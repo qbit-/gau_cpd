@@ -1,5 +1,5 @@
       subroutine frm2eints (iout, iprint, jsym2e, neq, neqshl, 
-     &     neqsh2, accdes, keepints, next, irw2efull, v, lenv)
+     &     neqsh2, accdes, keepints, outints, next, irw2efull, v, lenv)
       
       implicit none
 
@@ -85,7 +85,7 @@ C     debug
       
       integer     i, j, k, l
       integer     dims(4)
-      logical     dbg
+      logical     outints
 
 C     Memory allocation
 
@@ -105,7 +105,7 @@ C     allocate memory for integrals. For an easy setup for PRISM see l906
       call tstcor (jend-1, lenv, 'frm2eints: integrals')
 
       if (keepints) then
-         next = jscr
+         next = len2eint
       else
          next = 0
       endif
@@ -237,9 +237,9 @@ C     save integrals
 
 C     Debug printing
 
-      dbg = .true.
+C      outints = .false.
 
-      if (dbg) then
+      if (outints) then
          dims(1) = nbasis
          dims(2) = nbasis
          dims(3) = nbasis
