@@ -27,7 +27,7 @@ C     other variables
       integer    jend, jx, js, jsv, ju, jvt, jscr, ii
       integer    lenspk
       integer    lenx, lens, lensv, lenu, lenvt, lenscr
-      integer    info, dims(2)
+      integer    info
       real*8     tol
 
 C     Functions
@@ -42,7 +42,7 @@ C     define sizes
       lenu = lens
       lenvt = lens
       lensv = ngrid
-      lenscr = 8*ngrid
+      lenscr = 9*ngrid
       lenspk = ngrid*(ngrid+1)/2
       
 C     allocate memory
@@ -68,11 +68,8 @@ C     form S(P,Q)
       if (iprint .gt. 5)  call outmts (iout,'X:', 0,
      & 0, v(jx), nbasis, ngrid, nbasis, ngrid)
       
-      call dsyrk ('u', 't', ngrid, nbasis, one, v(jx), nbasis,
-     &     zero, v(js), ngrid)
-
-c$$$      call dgemm ( 't', 'n', ngrid, ngrid, nbasis, one, v(jx), nbasis,
-c$$$     &     v(jx), nbasis, zero, v(js), ngrid )
+      call dgemm ( 't', 'n', ngrid, ngrid, nbasis, one, v(jx), nbasis,
+     &     v(jx), nbasis, zero, v(js), ngrid )
 
 C     Hadamard square of R^t * R
       do 10 ii = 0, lens - 1

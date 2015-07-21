@@ -75,7 +75,7 @@ C     Hadamard square of R^t * R
       
 C     form S(P,Q)^(-1)
       tol = Gfloat(10)**(-itol)
-      call geninv(iout,iprint,'S:', 0, tol, ngrid, v(js), v(ju),
+      call geninv(iout,iprint,'S', 0, tol, ngrid, v(js), v(ju),
      &     v(jsv), .false., xx, nrank, v(jend), lenv - jend)
       
 C     save S^-1

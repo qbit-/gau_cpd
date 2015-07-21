@@ -306,7 +306,7 @@ C-----------------------------------------------------------------------------+
 C     Compute spatial overlap using collocation from irwfac                   |
 C-----------------------------------------------------------------------------+      
 
-      call frmspovinv (iout, iprint, nbasis, ngrid, tolinv,
+      call frmspovinv (iout, iprint, nbasis, ngrid, itol,
      &     irwfac, nrank, irwspo, v(jend), lenv - jend)
       
 C-----------------------------------------------------------------------------+      
