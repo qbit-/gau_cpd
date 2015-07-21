@@ -95,7 +95,4 @@ C     actual total number of grid points:
       ngridu = iopwrt(2)      
       write (iout, *) 'Frmquad: nin3su completed, npoints = ', ngridu
 
-      call conddf (irwfact, ngridu*nbas6d)
-C      call transp (nbasis, ngridu, irwfac, irwfact, v, lenv)
-
       end

@@ -103,8 +103,8 @@ C     other variables
 
       integer     nbsq
       integer     ngrid, nbas6d
-      integer     nrank   
-      real*8      tolinv, accdes
+      integer     nrank, itol   
+      real*8      accdes
 
 C     CPD2E RWF files
 
@@ -141,7 +141,7 @@ C     symmetry related variables
 
 C     functions called
 
-      real*8      decacc
+      real*8      decacc, gfloat
       integer     intowp
 
 C     debug temporary stuff
@@ -224,8 +224,8 @@ C     Defaults if nothing is set
 C     Desired accuracy and pseudoinversion tolerance for spatial overlap
 
       accdes = decacc (0, 0.0d0, .false.)
-      tolinv = 1.0e-10
-      write (iout, 1020) accdes, tolinv
+      itol = 10
+      write (iout, 1020) accdes, Gfloat(10)**(-itol)
       
 C     Use of symmetry
 C     We currently set jsym2e = 2 in the code (users cannot change that).
@@ -290,7 +290,7 @@ c$$$     &     accdes, .false., jj, irw2efull, v(jend), lenv)
 c$$$
 c$$$      else
 c$$$         call frm2eri (iout, iprint, jsym2e, neq, neqshl, 
-c$$$     &        neqsh2, ir12, .false., .false., tolinv, accdes, jj,
+c$$$     &        neqsh2, ir12, .false., .false., itol, accdes, jj,
 c$$$     &        jj, irwria, irwrib, v(jend), lenv - jend)
 c$$$
 c$$$      endif
@@ -320,7 +320,7 @@ C-----------------------------------------------------------------------------+
          
       else
          call frmemtri(iout, iprint, nbasis, ngrid, jsym2e, neq, neqshl,
-     &        neqsh2, ir12, tolinv, accdes, ndbf6d, irwfac,
+     &        neqsh2, ir12, itol, accdes, ndbf6d, irwfac,
      &        irwria, irwrib, irwe, v(jend), lenv - jend)
       endif
       
@@ -338,7 +338,8 @@ C-----------------------------------------------------------------------------+
          dims(2) = ngrid
          call outoctfmt(iout, 'x.mat', 1, 'x', 2, dims, v(jend))
 
-         call fileio(2,-irwspo,ngrid*ngrid,v(jend),0)
+         call fileio(2,-irwspo,ngrid*(ngrid+1)/2,v(jend),0)
+         call square (v(jend), v(jend), ngrid, ngrid, 0)
          dims(1) = ngrid
          dims(2) = ngrid
          call outoctfmt(iout, 's.mat', 1, 's', 2, dims, v(jend))

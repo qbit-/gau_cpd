@@ -1,5 +1,5 @@
       subroutine frmemtri(iout, iprint, nbasis, ngrid, jsym2e, neq,
-     &     neqshl, neqsh2, ir12, tolinv, accdes, ndbf,
+     &     neqshl, neqsh2, ir12, itol, accdes, ndbf,
      &     irwfac, irwria, irwrib,
      &     irwe, v, lenv)
 
@@ -39,7 +39,7 @@ C     ----passed to frm2eri---
 C     [in]  jsym2e             - controls symmetry.           
 C     [in]  neq, neqshl, neqs2 - symmetry related RWFs from Gaussian
 C     [in]  ir12               - metric to use: 1 - 1/r, 2 - overlap
-C     [in]  tolinv             - tolerance for the inverse of the overlap
+C     [in]  itol               - tolerance for the inverse of the overlap, 10**-itol
 C     [in]  accdes             - desired accuracy from PRISM
 C     ----------------------
 C     [in]  irwfac             - RWF with quadratures
@@ -56,8 +56,8 @@ C     Arguments
       real*8     v(*)
       
       integer    jsym2e, neq, neqshl, neqsh2
-      integer    ir12
-      real*8     tolinv, accdes
+      integer    ir12, itol
+      real*8     accdes
       integer    irwfac, irwe
 
 C     Pointers and sizes
@@ -108,7 +108,7 @@ C     Compute integrals                             |
 C---------------------------------------------------+
 
       call frm2eri (iout, iprint, jsym2e, neq, neqshl, 
-     &     neqsh2, ir12, keepov, keepints, tolinv, accdes, jovoff,
+     &     neqsh2, ir12, keepov, keepints, itol, accdes, jovoff,
      &     next, irwria, irwrib, v(jend), lenv - jend)
 
 C     Allocate files for half projected integrals and half projected integrals times overlap 

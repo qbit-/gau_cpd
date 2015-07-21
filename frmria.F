@@ -1,5 +1,5 @@
       subroutine frmria (iout, iprint, next, irwria, ndbf, ndbf6d, keep,
-     &     ir12, tolinv, ipflag, allowp, natoms, ian, atmchg, c,
+     &     ir12, itol, ipflag, allowp, natoms, ian, atmchg, c,
      &     iattyp, v, mdv)
       Implicit Real*8 (A-H,O-Z)
 C
@@ -12,7 +12,7 @@ C     [out]  next            - offset to the next free memory
 C     [out]  irwria          - RWF with the inverse of DBF overlap (initialized here)
 C     [out]  ndbf, ndbf6d    - DBF basis sizes
 C     [in]   keep            - if we want to keep the inverse in memory instead of RWF
-C     [in]   tolinv          - tolerance for the inverse 
+C     [in]   itol          - tolerance for the inverse 
 C     [in]   ir12            - metric used:
 C                                 1 - 1/r, 2 - overlap
 C     [in]   ipflag, allowp  - usual PRISM variables
@@ -67,7 +67,8 @@ C     Form (P|Q)**-1.
         NDBFU = NDBF
       else
         NDBFU = NDBF6D
-        endIf
+      endIf
+      tolinv = Gfloat(10)**(-itol)
       Call GenInv(IOut,IPrint,'A(RI)',0,TolInv,NDBFU,V(jA),V(jASq),
      $  V(jEig),.False.,XX,NRankA,V(jV),MDV1)
       If(IPrint.ge.2) Write(IOut,1000) NDBF,NDBF6D,NRankA,DoPurA

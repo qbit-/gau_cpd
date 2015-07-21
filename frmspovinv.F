@@ -1,4 +1,4 @@
-      subroutine frmspovinv (iout, iprint, nbasis, ngrid, tol,
+      subroutine frmspovinv (iout, iprint, nbasis, ngrid, itol,
      &     irwfac, nrank, irwspo, v, lenv)
 
       implicit none
@@ -10,13 +10,13 @@ C
 C     Options:
 C     [in] nbasis - cartesian basis size (dimension of mu)
 C     [in] ngrid  - number of grid points (dimension of P)
-C     [in] tol    - numeric tolerance for the pseudoinverse
+C     [in] itol    - numeric tolerance for the pseudoinverse, 10**(-itol)
 C     [in] irwfac - RWF with quadrature
 C     [out] irwspo - RWF with S^-1 
 
-      integer    iout, iprint, nbasis, ngrid
+      integer    iout, iprint, nbasis, ngrid, itol, nrank
       integer    irwfac, irwspo, lenv
-      real*8     tol, v, xx
+      real*8     v, xx
       dimension  v(*)
 
       real*8     one, zero, half
@@ -25,7 +25,10 @@ C     [out] irwspo - RWF with S^-1
 C     other variables
       integer    jend, jx, js,  jspk, jsv, ju, jscr, ii
       integer    lenx, lens, lensv, lenu, lenspk, lenscr
-      integer    nrank
+      real*8     tol
+
+C     functions
+      real*8     gfloat
       
 C     define sizes
       
@@ -71,7 +74,7 @@ C     Hadamard square of R^t * R
      &     v(js))
       
 C     form S(P,Q)^(-1)
-
+      tol = Gfloat(10)**(-itol)
       call geninv(iout,iprint,'S:', 0, tol, ngrid, v(js), v(ju),
      &     v(jsv), .false., xx, nrank, v(jend), lenv - jend)
       

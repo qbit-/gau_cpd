@@ -4,8 +4,8 @@ GAU_DIRL = $(GAU_DIR)
 GAU_DIRA = $(GAU_DIR)
 NUTIL=$(GAU_DIR)/util.a
 
-MKLPATH = /opt/intel/composerxe-2015.0.090/mkl/lib/intel64
-MKLINCLUDE = /opt/intel/composerxe-2015.0.090/mkl/include
+MKLPATH = /opt/intel/composerxe-2015.2.164/mkl/lib/intel64
+MKLINCLUDE = /opt/intel/composerxe-2015.2.164/mkl/include
 PROFFLAG = -Mprof=func  
 FC0 = pgf77 -g
 #FC0 = pgf90 -Wl,-z,muldefs

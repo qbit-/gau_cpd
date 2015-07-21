@@ -1,4 +1,4 @@
-      subroutine frmspovinv_blas (iout, iprint, nbas6d, ngrid, tol,
+      subroutine frmspovinv_blas (iout, iprint, nbasis, ngrid, itol,
      &     irwfac, nrank, irwspo, v, lenv)
 
       implicit none
@@ -8,16 +8,16 @@ C     S(P,Q) = ( X(mu,P)^t X(mu,Q) ) o ( X(nu,P)^t X(nu,Q) )
 C     X is stored in the irwfac, s is put into irwspo
 C
 C     Options:
-C     [in] nbas6d - cartesian basis size (dimension of mu)
+C     [in] nbasis - cartesian basis size (dimension of mu)
 C     [in] ngrid  - number of grid points (dimension of P)
 C     [in] tol    - numeric tolerance for the pseudoinverse
 C     [in] irwfac - RWF with quadrature
 C     [out] nrank - rank of the pseudoinverse
 C     [out] irwspo - RWF with S^-1 
 
-      integer    iout, iprint, nbas6d, ngrid, nrank
+      integer    iout, iprint, nbasis, ngrid, itol, nrank
       integer    irwfac, irwspo, lenv
-      real*8     tol, v
+      real*8     v
       dimension  v(*)
 
       real*8     one, zero
@@ -25,22 +25,25 @@ C     [out] irwspo - RWF with S^-1
       
 C     other variables
       integer    jend, jx, js, jsv, ju, jvt, jscr, ii
-      integer    jscopy, junit
+      integer    lenspk
       integer    lenx, lens, lensv, lenu, lenvt, lenscr
-      integer    info
-      real*8     l(ngrid,ngrid)
-      real*8     r(ngrid,ngrid)
+      integer    info, dims(2)
+      real*8     tol
 
+C     Functions
+      real*8     gfloat
+      
  1000 format(' Eigenvalues of S:',/,10(1PD10.2))
  1020 format(' SDV returned info=',I12,' to frmspovinv.')
       
 C     define sizes
-      lenx = nbas6d * ngrid
+      lenx = nbasis * ngrid
       lens = ngrid*ngrid
       lenu = lens
       lenvt = lens
       lensv = ngrid
       lenscr = 8*ngrid
+      lenspk = ngrid*(ngrid+1)/2
       
 C     allocate memory
       jend = 1
@@ -61,12 +64,15 @@ C     allocate RWF
 C     form S(P,Q)
       
       call fileio (2, -irwfac, lenx, v(jx), 0)
-
-      if (iprint .gt. 5)  call outmts (iout,'X:', 0,
-     & 0, v(jx), nbas6d, ngrid, nbas6d, ngrid)
       
-      call dgemm ( 't', 'n', ngrid, ngrid, nbas6d, one, v(jx), nbas6d,
-     &     v(jx), nbas6d, zero, v(js), ngrid )
+      if (iprint .gt. 5)  call outmts (iout,'X:', 0,
+     & 0, v(jx), nbasis, ngrid, nbasis, ngrid)
+      
+      call dsyrk ('u', 't', ngrid, nbasis, one, v(jx), nbasis,
+     &     zero, v(js), ngrid)
+
+c$$$      call dgemm ( 't', 'n', ngrid, ngrid, nbasis, one, v(jx), nbasis,
+c$$$     &     v(jx), nbasis, zero, v(js), ngrid )
 
 C     Hadamard square of R^t * R
       do 10 ii = 0, lens - 1
@@ -85,18 +91,17 @@ C     svd
 
       if ( info .ne. 0 ) then
          write (iout,1020) info
-         call gauerr('SVD failed for GenInv.')
+         call gauerr('SVD failed in frmspovinv.')
       endIf
       
-      if (info .ne. 0) call gauerr('LAPACK SVD failed in frmspov')
-
       if (iprint .ge. 2) then
-         write (iout, 1000) (v(js+ii), ii=1,lensv-1) 
+         write (iout, 1000) (v(jsv+ii), ii=0,lensv-1) 
       endif
       
       nrank = 0
+      tol   = Gfloat(10)**(-itol)
       do 20 ii = 0, lensv - 1 
-          if ( v(jsv + ii) .gt. tol ) then
+          if ( abs(v(jsv + ii)) .gt. tol ) then
              v(jsv + ii) = one / v(jsv + ii)
              nrank = nrank + 1
           else
@@ -114,8 +119,9 @@ C     assemble back
       if (iprint .gt. 5)  call outmts (iout,'S^-1:', 0,
      & 0, v(js), ngrid, ngrid, ngrid, ngrid)
 
+      call linear (v(js),v(js), ngrid, ngrid)
 C     save S^-1
-      call fileio (1, -irwspo, lens, v(js), 0) 
+      call fileio (1, -irwspo, lenspk, v(js), 0) 
       
       return
       end
