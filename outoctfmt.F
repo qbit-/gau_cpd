@@ -38,7 +38,7 @@ C     functions
  1002 format ('# type: matrix')
  1003 format ('# ndims: ', I3)
  1004 format (' ',I6,$)
- 1005 format (' ',E22.16)
+ 1005 format (' ',E24.16E3)
  1010 format ('# type: scalar')
  1020 format ('# rows: ', I3)
  1030 format ('# columns: ', I3)
