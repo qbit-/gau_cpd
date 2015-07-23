@@ -40,7 +40,7 @@ C     other
          jscr = jend
          jend = jscr + numy
          
-         call tstcor (jend-1, lenv)
+         call tstcor (jend-1, lenv, 'updmatf')
 
          do 200 ii = 0, numy - 1
             ioff = x + (y + ii)*dimx

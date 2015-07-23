@@ -20,7 +20,7 @@ C     other
       jscr = jend
       jend = jscr + nump
 
-      call tstcor (jend-1, lenv)
+      call tstcor (jend-1, lenv, 'updemt')
 
       do 100 iq = 0, numq - 1
          ioff = p + (q + iq)*ngrid
