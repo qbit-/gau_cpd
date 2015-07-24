@@ -154,6 +154,10 @@ C     debug temporary stuff
       real*8      outbuf(4)
       logical     dbg, tests
 
+      logical     neg
+      integer     jrho
+      real*8      xx
+      
 C     format statements
 
  1001 format (' CPD2E was invoked with the following options:')
@@ -331,6 +335,10 @@ C-----------------------------------------------------------------------------+
       call frmz(iout, iprint, ngrid, irwspo, irwe, irwz, v(jend), lenv
      & - jend) 
 
+C----------------------------------------------------------------------------+
+C     Testing and staging stuff                                              |
+C----------------------------------------------------------------------------+
+      
       dbg = .true. 
       if (dbg) then
          call fileio(2,-irwfac,nbasis*ngrid,v(jend),0)
@@ -384,6 +392,27 @@ C-----------------------------------------------------------------------------+
          if (ri) write (iout, 1100) ' ndbf = ', ndbf6d
       endif
 
+      jrho = jend
+      jend = jrho + nbasis*nbasis
+      call toeplitz (iout, nbasis, 0, v(jrho))
+      dims(1) = nbasis
+      dims(2) = nbasis
+      call outoctfmt(iout, 'rho.mat', 1, 'rho', 2, dims, v(jrho))         
+      
+      call linear (v(jrho), v(jrho), nbasis, nbasis)
+      
+      call cpdfock (iout, iprint, 1, .true., nbasis, ngrid, irwfac,
+     &     irwz, 1, 0, 1, v(jrho), v(jrho), v(jend),
+     &     v(jend+nbasis*nbasis),
+     &     v(jend+2*nbasis*nbasis), lenv-2*nbasis*nbasis)
+
+c$$$      call ascale (nbasis*(nbasis+1)/2, -1.0d0, v(jend), v(jend))
+c$$$      call square (v(jend), v(jend), nbasis, nbasis, -1)
+
+      call square (v(jend), v(jend), nbasis, nbasis, 0)
+      
+      call outoctfmt(iout, 'fock.mat', 1, 'fock', 2, dims, v(jend))         
+      
       call chainx(0)
       
       end

@@ -34,13 +34,15 @@ all: l325.exe
 
 MAIN325 = ml325.o
 
-OBJ325 =  asubf.o atquadwrt.o cpd2int.o ctrmemest1.o ctrmemest_nd.o ctrmemest2.o frm2eints.o frm2eri.o frmemt.o frmemt_nd.o frmemtri.o frmquad.o frmria.o frmrib.o frmspovinv.o frmspovinv_blas.o\
-	  frmz.o normfro.o outcsv.o outoctfmt.o reconstr.o updmatf.o
+OBJ325  = atquadwrt.o cpd2int.o ctrmemest1.o ctrmemest_nd.o ctrmemest2.o frm2eints.o frm2eri.o frmemt.o frmemt_nd.o frmemtri.o frmquad.o frmria.o frmrib.o frmspovinv.o \
+	  frmz.o updmatf.o
+TEMPOBJ = asubf.o cpdfock.o cpdfkmem.o ctrcou.o ctrexc.o frmspovinv_blas.o normfro.o outcsv.o outoctfmt.o reconstr.o toeplitz.o
+
 
 OBJGAU = numin3.o
 
-l325.exe: $(MAIN325) $(OBJ325) $(OBJGAU)
-	$(FC0) $(PROFFLAG) -o l325.exe $(MAIN325) $(OBJ325) $(OBJGAU) $(NUTIL) \
+l325.exe: $(MAIN325) $(OBJ325) $(TEMPOBJ) $(OBJGAU)
+	$(FC0) $(PROFFLAG) -o l325.exe $(MAIN325) $(OBJ325) $(TEMPOBJ) $(OBJGAU) $(NUTIL) \
 	$(LAPext) $(FC1) $(BLAS)
 	chmod o-rx l325.exe
 
