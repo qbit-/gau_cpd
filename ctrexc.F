@@ -56,7 +56,10 @@ C     other
       call tstcor (jend - 1, scrsz, 'ctrexc')
 
       if (isym .eq. 0) then
+         call ascale (ntt, -1.0d0, p, p)
          call square (p,v(jscr),nbasis,nbasis,3)
+C     scale by -1 to account for a negative contribution of the exchange
+C     as fofcou does
       elseif (isym .eq. 1) then
          call square (p,v(jscr),nbasis,nbasis,-3)
 C     Warning! Usual scaling by -1 is intentionally omitted here

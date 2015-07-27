@@ -88,18 +88,21 @@ C     Load matrices of CPD decomposed 2e integrals
       call fileio (2, -irwfac, lenx, v(jx), 0)
       call fileio (2, -irwz, lenz, v(jz), 0)
 
+C     input checks
+      
       if ((iopcl .ne. 0) .and. (iopcl .ne. 1)) 
      &     call gauerr ('cpdfock: unknown value of iopcl')      
-
+      
       if ((nmats + nmatt) .gt. nmat) 
      &     call gauerr ('cpdfock: nmats + nmatt > nmat')      
 
-      call cpdfkmem (iout, iprint, initf, nbasis, ngrid,
+      call cpdfkmem (iout, iprint, iopcl, initf, nbasis, ngrid,
      &        v(jx), v(jz), nmat, nmats, nmatt,
      &        pa, fa, v(jend), lenv - jend)
 
       if (iopcl .eq. 1) then 
-         call cpdfkmem (iout, iprint, initf, nbasis, ngrid,
+         call cpdfkmem (iout, iprint, iopcl, initf, nbasis,
+     &        ngrid,
      &        v(jx), v(jz), nmat, nmats, nmatt,
      &        pb, fb, v(jend), lenv - jend)
       endif

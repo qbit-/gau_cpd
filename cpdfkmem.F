@@ -1,4 +1,4 @@
-      subroutine cpdfkmem (iout, iprint, initf, nbasis, ngrid,
+      subroutine cpdfkmem (iout, iprint, iopcl, initf, nbasis, ngrid,
      & x, z, nmat, nmats, nmatt, p, f, v, lenv)
 
       implicit none
@@ -28,6 +28,7 @@ C
 C     The formulas for contraction can be found in ctrcou and ctrexc
 C      
 C     Arguments:
+C     [in]  iopcl   - type of the contraction (open/closed shell): does nothing now, (2*J-K)P is the contraction
 C     [in]  initf   - if we need to initialize the Fock matrix or to update current value
 C     [in]  nbasis  - basis size
 C     [in]  ngrid   - quadrature size
@@ -44,7 +45,8 @@ C
 C-----------------------------------------------------------------------------+
 C     arguments
 
-      logical     initf 
+      logical     initf
+      integer     iopcl
       integer     iout, iprint
       integer     nbasis, ngrid
       integer     nmat, nmats, nmatt
@@ -85,9 +87,18 @@ C     do full contraction with the singlet symmetric part
       do 100 ii = 0, nmats - 1
          call ctrcou (iout, iprint, initf, 0, nbasis, ngrid, x,
      &        z, p(1+ii*ntt), f(1+ii*ntt), v)
-         call ctrexc (iout, iprint, .false., 0, nbasis, ngrid, x,
-     &        z, p(1+ii*ntt), f(1+ii*ntt), v)
  100  continue
+
+C     Multiply Coulomb by 2 to comply to fofcou
+      
+      do 120 ii = 0, nmats - 1
+         call ascale (ntt, 2.0d0, f(1+ii*ntt), f(1+ii*ntt))
+ 120  continue
+
+      do 150 ii = 0, nmats - 1
+         call ctrexc (iout, iprint, .false., 0, nbasis, ngrid, x,
+     &        z, p(1+ii*ntt), f(1+ii*ntt), v) 
+ 150  continue
       
 C     do exchange part for triplets (symmetric)
       

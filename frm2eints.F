@@ -237,7 +237,7 @@ C     save integrals
 
 C     Debug printing
 
-C      outints = .false.
+      outints = .false.
 
       if (outints) then
          dims(1) = nbasis
