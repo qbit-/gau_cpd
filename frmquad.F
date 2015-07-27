@@ -45,7 +45,8 @@ C     pointers
 
       integer     jend, junk
       real*8      xx
-
+      parameter   ( junk = 0, xx = 0.0d0 )
+      
       integer     npmax
 
 C     functions called in quadrature routine
@@ -83,7 +84,7 @@ C     here we just give maximal possible length - may need adjustment in future
       
       lenscrwrt  = ngridmx*nbas6d
 
-      call NIn3Su(iout,iprint,iopcl,.true.,.false.,npmax,.true.,
+      call nin3su (iout,iprint,iopcl,.true.,.false.,npmax,.true.,
      $  .true.,.false.,.false.,0,0,0,iradan,iranwt,irangd,
      $  2,0,natoms,nbas6d,IAn,iattyp,atmchg,c,xx,xx,xx,
      $  xx,xx,.false.,xx,atquadwrt,iopwrt,xx,lenscrwrt,MOFunX,junk,xx,

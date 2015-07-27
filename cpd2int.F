@@ -6,7 +6,7 @@
 C +------------------------------------------------------------+
 C |  CPD-2INT   ---   the Scuseria group, 02.2015              |
 C |                                                            |
-C |                                                   v0.1 -   |
+C |                                                   v0.2 -   |
 C |                                                            |
 C |    ( link 320, part of the Gaussian system of programs )   |
 C |                                                            |
@@ -31,15 +31,30 @@ C |  Description of IOps                                       |
 C |  ===================                                       |
 C |                                                            |
 C |                                                            |
-C |  iop(6) - printing level                                   |
-C |     = 0, [default] print results at convergence            |
-C |     = 1, print energy at every iteration                   |
-C |     = 2, print CI matrices at every iteration              |
-C |     = 3, print initial and converged density matrices      |
-C |     = 4, print density matrix at every iteration           |
-C |     = 5, print (gauge angle) matrices at every iteration   |
-C |     ...                                                    |
+C |  iop(33) - printing level                                  |
+C |     = 0, [default] print basic information                 |
+C |         from Quad and PRISM                                |
 C |     = 10, print two-electron integrals                     |
+C |                                                            |
+C |  iop(60) - number of radial and angular points in          |
+C |            spatial quadrature:                             |
+C |            IIIJJJ .. III radial points, JJJ angular points |
+C |            from appropriate Lebedev grid. The default is   |
+C |            10 radial and 26 angular points (7th order grid)|
+C |                                                            |
+C |  iop(61) - selects the radial weights?                     |
+C |  iop(62) - selects the radial grid type?                   |     
+C |                                                            |
+C |  iopp(109)-  RI options:                                   |
+C |           0 ... Default (2).                               |
+C |           1 ... If there is a density basis file already   |
+C |                 set up, then do RI.                        |
+C |           2 ... Ignore any density basis file do not do RI.|
+C |        NN00 ... Set the tolerance for discarding singular  |
+C |                 values in SVD in RI to 10^-NN              |
+C |                 (default 10^-6).                           | 
+C |       10000 ... Use the Coulomb operator (default).        |
+C |       20000 ... Use the overlap operator.                  |
 C |                                                            |
 C +------------------------------------------------------------+
 
@@ -195,7 +210,7 @@ C----------------------------------------------------------------------+
 
 C     Set printing level.
 
-      iprint = iop(6)
+      iprint = iop(33)
 
       if ( iprint .lt. 0 .or. iprint .gt. 10 ) iprint = 0
       write (iout, 1010) iprint
@@ -335,6 +350,10 @@ C-----------------------------------------------------------------------------+
       call frmz(iout, iprint, ngrid, irwspo, irwe, irwz, v(jend), lenv
      & - jend) 
 
+C     save number of grid points for other routines
+
+      call ilsw (1, 80, ngrid)
+      
 C----------------------------------------------------------------------------+
 C     Testing and staging stuff                                              |
 C----------------------------------------------------------------------------+
