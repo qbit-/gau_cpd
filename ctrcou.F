@@ -1,4 +1,4 @@
-      subroutine ctrcou (iout, iprint, iupdate, isym, nbasis, ngrid, x,
+      subroutine ctrcou (iout, iprint, initf, isym, nbasis, ngrid, x,
      & z, p, f, v)
 
 C-----------------------------------------------------------------------------------------+
@@ -16,7 +16,7 @@ C     F_{m,n} = n_{I} X_{m,I} X_{n,I} = X diag(n) X^{t}
 C     diag(n) - form a diagonal matrix from a vector n
 C      
 C     Arguments:
-C     [in]  iupdate - if we need to update the current contents of F
+C     [in]  initf   - if we need to update the current contents of F or initialize it
 C     [in]  isym    - symmetry of the lower triangulat densities: 0 - symmetric, 1 - antisymmetric
 C     [in]  nbasis  - basis size
 C     [in]  ngrid   - quadrature size
@@ -30,7 +30,7 @@ C-------------------------------------------------------------------------------
 
 C     arguments
 
-      logical      iupdate
+      logical      initf
       integer      iout, iprint, isym, nbasis, ngrid
       real*8       x(*), z(*)
       real*8       p(*), f(*), v(*)
@@ -101,10 +101,10 @@ C     form F
 
 C     return the result
 
-      if (iupdate) then
+      if (initf) then
+         call linear (v(jscr), f, nbasis, nbasis)
+      else
          call linear (v(jscr), v(jscr), nbasis, nbasis)
          call aadd (ntt, v(jscr), f, f)
-      else
-         call linear (v(jscr), f, nbasis, nbasis)
       endif
       end

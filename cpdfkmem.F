@@ -85,7 +85,7 @@ C     do full contraction with the singlet symmetric part
       do 100 ii = 0, nmats - 1
          call ctrcou (iout, iprint, initf, 0, nbasis, ngrid, x,
      &        z, p(1+ii*ntt), f(1+ii*ntt), v)
-         call ctrexc (iout, iprint, .true., 0, nbasis, ngrid, x,
+         call ctrexc (iout, iprint, .false., 0, nbasis, ngrid, x,
      &        z, p(1+ii*ntt), f(1+ii*ntt), v)
  100  continue
       
