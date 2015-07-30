@@ -33,38 +33,32 @@ C     Read/write the input/output array
          call outmts(iout,'weights:',0,0,weight,ngrid,1,ngrid,1)
       endif
       
-C     Find how many vectors of length nbas6d we can handle in scratch
-      if ( lenscr .lt. nbas6d ) call
-     & gauerr ('Insufficient lenscr in atquadwrt')
-      if ( lenscr / nbas6d .gt. ngrid ) then
-         blksz = ngrid
-      else
-         blksz = lenscr / nbas6d
-      endif
-      nblk  = ngrid / blksz
-
 C     Take sqrt of weights
-      do 10 ig = 1, ngrid
-         weight(ig) = dsqrt(weight(ig))
- 10   continue
+c$$$      do 10 ig = 1, ngrid
+c$$$         weight(ig) = dsqrt(weight(ig))
+c$$$ 10   continue
       
 C     uncompress and write X to the RWF column by column. We need to uncompress, transpose
 C     and weight Chi to form X
 
-      do 100 ib = 1, nblk
-         call aclear(scr,nbas6d*blksz)
+      if (lenscr .lt. nbas6d ) then
+         write (iout, *) lenscr, nbas6d, ngrid
+         call gauerr ('atquadwrt: too small buffer passed to atquadwrt')
+      endif
+
+      call aclear(ngrid*nbas6d,scr)
+
+      do 110 mu1 = 1, nsigbf
+         do 120 ig = 1, ngrid         
+            
+            mu = sigbfn(mu1)
+            scr((ig-1)*nbas6d + mu) =
+     &  dsqrt(weight(ig)) * chi(ig,mu1)
+            
+ 120     continue
+ 110  continue
          
-         do 110 mu1 = 1, nsigbf
-            do 120 ig = ( ib - 1 )*blksz, ib*blksz         
-               
-               mu = sigbfn(mu1)
-               scr((ig-1)*nbas6d + mu) = weight(ig) * chi(ig,mu1)
-               
- 120         continue
- 110      continue
-         
-         call fileio (1, irwfac, nbas6d*blksz , scr, 0) 
- 100   continue
+      call fileio (1, irwfac, nbas6d*ngrid , scr, 0) 
       
       return
       end

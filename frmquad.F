@@ -82,7 +82,7 @@ C        2 - total number of grid points (incremented by working routine)
 C     scratch passed to the writing routine
 C     here we just give maximal possible length - may need adjustment in future
       
-      lenscrwrt  = ngridmx*nbas6d
+      lenscrwrt  = nbas6d
 
       call nin3su (iout,iprint,iopcl,.true.,.false.,npmax,.true.,
      $  .true.,.false.,.false.,0,0,0,iradan,iranwt,irangd,
