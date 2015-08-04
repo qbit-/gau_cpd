@@ -45,7 +45,7 @@ C |                                                            |
 C |  iop(61) - selects the radial weights?                     |
 C |  iop(62) - selects the radial grid type?                   |     
 C |                                                            |
-C |  iopp(109)-  RI options:                                   |
+C |  iop(109)-  RI options:                                    |
 C |           0 ... Default (2).                               |
 C |           1 ... If there is a density basis file already   |
 C |                 set up, then do RI.                        |
@@ -56,6 +56,13 @@ C |                 (default 10^-6).                           |
 C |       10000 ... Use the Coulomb operator (default).        |
 C |       20000 ... Use the overlap operator.                  |
 C |                                                            |
+C |  iop(77) - debug printing to Octave files                  |
+C |                0 - do not print                            |
+C |               >0 - print all matrices (X,S,E,Z)            |
+C |  iop(78) - debugging of decomposition accuracy (N^4 cost)  |
+C |                0 - do not perform                          |
+C |               >0 - compare decomposed integrals to full    |
+C |              >10 - print summary to a CSV file             |      
 C +------------------------------------------------------------+
 
 
@@ -119,6 +126,7 @@ C     other variables
       integer     nbsq
       integer     ngrid, nbas6d
       integer     nrank, itol   
+      integer     junk
       real*8      accdes
 
 C     CPD2E RWF files
@@ -159,19 +167,48 @@ C     functions called
       real*8      decacc, gfloat
       integer     intowp
 
-C     debug temporary stuff
-      
+C     debug printing
+
+      logical     dbgprint
       integer     dims(4)
-      integer     jj, irw2efull, irwrec
+
+C     debug integral decomposition
+      
+      logical     tests, testsprint
+
+      integer     irw2efull, irwrec
       integer     irwria, irwrib
       integer     ndbf6d
       real*8      normfro, froful, frodiff
-      real*8      outbuf(4)
-      logical     dbg, tests
+      real*8      outbuf(5)
 
-      logical     neg
-      integer     jrho
+C     debug Fock matrices
+      
+      integer     jrhoa, jrhob, jfa, jfb, jscr, ntt
+      integer     nmat, nmats, nmatt
       real*8      xx
+      
+C     .. prism variables ..
+
+#include "repall.inc"      
+      integer     ipflag, nsymop, nop1
+      integer     lseall, momega, nomega
+      parameter   ( momega = DEFMOMEGA, nomega = DEFNOMEGA )
+      real*8      omega(momega,nomega)
+      integer     jneq, jneqshl, jneqsh2
+      integer     lenneq, lenneqshl, lenneqsh2
+      logical     allowp(50), fmm
+      integer     jpflsta
+      integer     ifmm, iseall
+      integer     fmflag, fmflg1, nfxflg, ihmeth
+      integer     itqry
+      
+C       .. PBC variables ..
+
+      integer     npdir, jpbcsta, jpbcend
+      real*8      celvec(3,3)
+
+
       
 C     format statements
 
@@ -247,13 +284,31 @@ C     Desired accuracy and pseudoinversion tolerance for spatial overlap
       write (iout, 1020) accdes, Gfloat(10)**(-itol)
       
 C     Use of symmetry
-C     We currently set jsym2e = 2 in the code (users cannot change that).
-
-C       jsym2e = 2 uses integral symmetry by replicating integrals, but
-C       does not force the density or Fock matrices to be symmetric.
+C     We currently set jsym2e = 0 in the code (users cannot change that).
 
       jsym2e = 0
 
+C     debug printing options
+
+      if ( iop(77) .gt. 0 ) then
+         dbgprint = .true.
+      else
+         dbgprint = .false.
+      endif
+
+C     testing decomposition options
+
+      if ( iop(78) .gt. 0 ) then
+         tests = .true.
+         if ( ( iop(78) / 10 ) .gt. 0 ) then
+            testsprint = .true.
+         else
+            testsprint = .false.
+         endif
+      else
+         tests = .false.
+      endif
+      
 C     Use of RI (N^4 scaling algorithm) and related options
 
       iuseri = mod(iop(109), 10)
@@ -267,6 +322,8 @@ C     Use of RI (N^4 scaling algorithm) and related options
 C     Metric to use with RI: 1 - 1/r, 2 - overlap      
       ir12 = mod (iop(109), 100000) / 10000
       if (ir12 .eq. 0) ir12 = 1
+
+
       
 C     Restore /IBF/
 
@@ -295,7 +352,7 @@ C     Get 6d basis used with all quadratures
 
       call getnb6(nbas6d)
       if (nbasis .ne. nbas6d)
-     &  call gauerr ('Sperical bases are not supported yet')
+     &  call gauerr ('Spherical bases are not supported yet')
       
       write (iout, *)
       
@@ -355,11 +412,13 @@ C     save number of grid points for other routines
       call ilsw (1, 80, ngrid)
       
 C----------------------------------------------------------------------------+
-C     Testing and staging stuff                                              |
+C     debug printing                                                         |
 C----------------------------------------------------------------------------+
       
-      dbg = .true. 
-      if (dbg) then
+      if (dbgprint) then
+         call tstcor(max(ngrid*ngrid,nbasis*ngrid), lenv - jend,
+     &        'cpd2int: debug print')
+         
          call fileio(2,-irwfac,nbasis*ngrid,v(jend),0)
          dims(1) = nbasis
          dims(2) = ngrid
@@ -372,65 +431,188 @@ C----------------------------------------------------------------------------+
          call outoctfmt(iout, 's.mat', 1, 's', 2, dims, v(jend))
          
          call fileio(2,-irwe,ngrid*ngrid,v(jend),0)
-         dims(1) = ngrid
-         dims(2) = ngrid
          call outoctfmt(iout, 'e.mat', 1, 'e', 2, dims, v(jend))
          
          call fileio(2,-irwz,ngrid*ngrid,v(jend),0)
          call outoctfmt(iout, 'z.mat', 1, 'z', 2, dims, v(jend))         
       endif
 
-      tests = .true.
+C----------------------------------------------------------------------------+
+C     testing the decomposition ( O(N^4) cost )                              |
+C----------------------------------------------------------------------------+
+      
       if (tests) then
          call frm2eints (iout, iprint, jsym2e, neq, neqshl, neqsh2,
-     &     accdes, .false.,.true., jj, irw2efull, v(jend), lenv)
+     &     accdes, .false.,.true., junk, irw2efull, v(jend), lenv)
+
+         call tstcor (nbasis**4, lenv - jend, 'cpd2int: testing')
+         call fileio(2,-irw2efull,nbasis**4,v(jend),0)
+         dims(1) = nbasis
+         dims(2) = nbasis
+         dims(3) = nbasis
+         dims(4) = nbasis
+         call outoctfmt(iout, 'ints.mat', 1, 'ints', 4, dims, v(jend))         
          
          froful=normfro(iout, iprint, nbasis, irw2efull, v(jend), lenv)
          
          call reconstr (iout, iprint, nbasis, ngrid,
-     &     irwfac, irwz, irwrec, v(jend), lenv)
+     &        irwfac, irwz, irwrec, v(jend), lenv)
+         
          call asubf(iout,iprint,nbasis,irw2efull,irwrec, v(jend), lenv) 
          frodiff=normfro (iout, iprint, nbasis, irwrec, v(jend), lenv)
 
- 1100    format(A,I20)
- 1200    format(A,E20.12)
+         write (iout, '(A,I20)') ' nbasis = ', nbasis
+         write (iout, '(A,I20)') ' ngrid = ', ngrid
+         write (iout, '(A,I20)') ' nrank = ', nrank
+         write (iout, '(A,E20.12)') ' full = ', froful
+         write (iout, '(A,E20.12)') ' diff = ', frodiff
+         write (iout, '(A,E20.12)') ' frac % = ', frodiff / froful * 100
+         if (ri) write (iout, '(A,I20)') ' ndbf = ', ndbf6d
          
-         outbuf(1) = dble(nbasis)
-         outbuf(2) = dble(ngrid)
-         outbuf(3) = froful
-         outbuf(4) = frodiff
+         if (testsprint) then
+            outbuf(1) = dble(nbasis)
+            outbuf(2) = dble(ngrid)
+            outbuf(3) = froful
+            outbuf(4) = frodiff
+            outbuf(5) = frodiff / froful
+            call outcsv (iout, 'l325_summary.csv', 2, 5, outbuf)
+         endif
          
-         call outcsv (iout, 'summary.csv', 2, 4, outbuf)
-                  
-         write (iout, 1100) ' nbasis = ', nbasis
-         write (iout, 1100) ' ngrid = ', ngrid
-         write (iout, 1100) ' nrank = ', nrank
-         write (iout, 1200) ' full = ', froful
-         write (iout, 1200) ' diff = ', frodiff
-         write (iout, 1200) ' frac % = ', frodiff / froful * 100
-         if (ri) write (iout, 1100) ' ndbf = ', ndbf6d
       endif
 
-      jrho = jend
-      jend = jrho + nbasis*nbasis
-      call toeplitz (iout, nbasis, 0, v(jrho))
-      dims(1) = nbasis
-      dims(2) = nbasis
-      call outoctfmt(iout, 'rho.mat', 1, 'rho', 2, dims, v(jrho))         
+C---------------------------------------------------------------------------+
+C     testing Fock matrices                                                 |
+C---------------------------------------------------------------------------+      
       
-      call linear (v(jrho), v(jrho), nbasis, nbasis)
-      
-      call cpdfock (iout, iprint, 1, .true., nbasis, ngrid, irwfac,
-     &     irwz, 1, 0, 1, v(jrho), v(jrho), v(jend),
-     &     v(jend+nbasis*nbasis),
-     &     v(jend+2*nbasis*nbasis), lenv-2*nbasis*nbasis)
+      dbgprint = .true.
+      if (dbgprint) then
+         ntt   = nbasis*(nbasis+1)/2
+         nbsq  = nbasis*nbasis
+         jscr  = jend
+         jrhoa = jscr  + nbsq 
+         jrhob = jrhoa + 3*ntt
+         jfa   = jrhob + 3*ntt
+         jfb   = jfa   + 3*ntt
+         jend  = jfb   + 3*ntt
+         
+         dims(1) = nbasis
+         dims(2) = nbasis
 
-c$$$      call ascale (nbasis*(nbasis+1)/2, -1.0d0, v(jend), v(jend))
-c$$$      call square (v(jend), v(jend), nbasis, nbasis, -1)
+         nmat  = 3
+         nmats = 1
+         nmatt = 1
+         iopcl = 0
 
-      call square (v(jend), v(jend), nbasis, nbasis, 0)
+         do 1100 junk = 0, nmats - 1
+            call symmetric (iout, .true., nbasis, 0, v(jscr))
+            call outoctfmt (iout, 'pa.mat', 1, 'pas', 2, dims, v(jscr))
+            call linear (v(jscr), v(jrhoa + junk*ntt), nbasis, nbasis)
+ 1100    continue
+         do 1200 junk = 0, nmatt - 1 
+            call symmetric (iout, .true., nbasis, 0, v(jscr))
+            call outoctfmt (iout, 'pa.mat', 2, 'pat', 2, dims, v(jscr))
+            call linear (v(jscr), v(jrhoa+ntt*nmats+junk*nmatt), nbasis,
+     &    nbasis)
+ 1200    continue
+         do 1300 junk = 0, nmat - nmats - nmatt - 1 
+            call symmetric (iout, .true., nbasis, 1, v(jscr))
+            call outoctfmt (iout, 'pa.mat', 2, 'paa', 2, dims, v(jscr))
+            call linear (v(jscr), v(jrhoa+(nmats+nmatt)*ntt+junk*ntt),
+     &           nbasis, nbasis)
+ 1300    continue
+C     set up PBC information
       
-      call outoctfmt(iout, 'fock.mat', 1, 'fock', 2, dims, v(jend))         
+         call getpbc(npdir, celvec)
+         jpbcsta = jend
+         jpbcend = jpbcsta
+         call rdipbc(1, npdir, 0, jpbcsta, jpbcend, v, lenv)
+         jend = jpbcend
+         
+C     set up PRISM control flags
+
+         ifmm = 0
+         iseall = -1
+         
+         jpflsta = jend
+
+         call setpfl (iout, iprint, ifmm, ipflag, allowp, fmm, fmflag,
+     $        fmflg1, nfxflg, ihmeth, omega, iseall,lseall,jpflsta,
+     $        v(jend),
+     $        lenv-jend+1)
+
+C     load symmetry information
+
+        lenneq    = intowp (1*nbasis)
+        lenneqshl = max (itqry (), 0)
+        lenneqsh2 = max (itqry (), 0)
+
+        jneq    = jend
+        jneqshl = jneq     + lenneq
+        jneqsh2 = jneqshl  + lenneqshl
+        jend    = jneqsh2  + lenneqsh2
+
+C     Fill arrays with symmetry related quantities.
+
+        if ( lenneq .ne. 0 ) then
+           call fileio (2, -580, lenneq, v(jneq), 0)
+        endif
+
+        if ( lenneqshl .ne. 0 ) then
+           call fileio (2, -565, lenneqshl, v(jneqshl), 0)
+        endif
+
+        if ( lenneqsh2 .ne. 0 ) then
+           call fileio (2, -726, lenneqsh2, v(jneqsh2), 0)
+        endif
+        
+         call fofcou (iout,iprint,1,iopcl,0,1,nomega,
+     $ omega,fmm,fmflag,fmflg1,nfxflg,ipflag,allowp,lseall,
+     $ v(iseall),
+     $ 1,natoms,-1,-1,.false.,.false.,.false.,0,accdes,
+     $ (1.0d0,0.0d0),0,nmat,nmats,nmatt,nmat,0,0,nbasis,
+     $ 0,1,1,v(jneq),v(jneqshl),v(jneqsh2),rotall,neqall,0,0,v(jrhoa),
+     $ v(jrhob),junk,junk,junk,junk,junk,junk,junk,0,v(jfa),v(jfb),0,
+     $ junk,junk,natoms,ian,atmchg,c,iattyp,iatfrg,xx,xx,
+     $ v(jpbcsta),celvec,(0.0d0,0.0d0),(1.0d0,0.0d0),xx,0,0,xx,xx,junk,
+     $ junk,xx,v(jend),v(jend),lenv-jend+1)
+
+         do 2100 junk = 0, nmats - 1
+            call square (v(jfa+junk*ntt), v(jscr), nbasis, nbasis, 3)
+            call outoctfmt(iout, 'fa.mat', 1, 'fas', 2, dims, v(jscr))         
+ 2100    continue
+         do 2200 junk = 0, nmatt - 1
+            call square (v(jfa+nmats*ntt+junk*ntt), v(jscr), nbasis,
+     &           nbasis, 3)
+            call outoctfmt(iout, 'fa.mat', 2, 'fat', 2, dims, v(jscr))         
+ 2200    continue
+         do 2300 junk = 0, nmat - nmats - nmatt - 1
+            call square (v(jfa+(nmats+nmatt)*ntt+junk*ntt), v(jscr),
+     &           nbasis, nbasis, -3)
+            call outoctfmt(iout, 'fa.mat', 2, 'faa', 2, dims, v(jscr))         
+ 2300    continue
+
+         call cpdfock (iout, iprint, iopcl, -1, nbasis, ngrid, 
+     &    irwfac,
+     &        irwz, nmat, nmats, nmatt, v(jrhoa), v(jrhob), v(jfa),
+     &        v(jfb),
+     &        v(jend), lenv-jend)
+
+         do 3100 junk = 0, nmats - 1 
+            call square (v(jfa+junk*ntt), v(jscr), nbasis, nbasis, 3)
+            call outoctfmt(iout, 'fai.mat', 1, 'fais', 2, dims, v(jscr))         
+ 3100    continue
+         do 3200 junk = 0, nmatt - 1
+            call square (v(jfa+nmats*ntt+junk*ntt), v(jscr), nbasis,
+     &           nbasis, 3)
+            call outoctfmt(iout, 'fai.mat', 2, 'fait', 2, dims, v(jscr))         
+ 3200    continue
+         do 3300 junk = 0, nmat - nmats - nmatt - 1
+            call square (v(jfa+(nmats+nmatt)*ntt+junk*ntt), v(jscr),
+     &       nbasis, nbasis, -3)
+            call outoctfmt(iout, 'fai.mat', 2, 'faia', 2, dims, v(jscr))         
+ 3300    continue
+         
+      endif
       
       call chainx(0)
       

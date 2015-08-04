@@ -83,17 +83,14 @@ C     Prepare for parallel run (NYI)
       call tstcor (max(lenscrco,lenscrex), lenv, 'cpdfkmem')
 
 C     do full contraction with the singlet symmetric part
-      
+
+      ioff = 1
       do 100 ii = 0, nmats - 1
          call ctrcou (iout, iprint, initf, 0, nbasis, ngrid, x,
      &        z, p(1+ii*ntt), f(1+ii*ntt), v)
- 100  continue
-
 C     Multiply Coulomb by 2 to comply to fofcou
-      
-      do 120 ii = 0, nmats - 1
-         call ascale (ntt, 2.0d0, f(1+ii*ntt), f(1+ii*ntt))
- 120  continue
+         call ascale (ntt, 2.0d0, f(ioff+ii*ntt), f(ioff+ii*ntt))
+ 100  continue
 
       do 150 ii = 0, nmats - 1
          call ctrexc (iout, iprint, .false., 0, nbasis, ngrid, x,

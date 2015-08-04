@@ -8,9 +8,8 @@ C
 C     F_{m,n} = (ms|rn) * P_{s,r}, where (ms|rn) = X_{m,I} X_{s,I} Z_{I,J} X_{r,J} X_{n,J}
 C     (repeated indices are summed)
 C     ---------------------------
-C     L_{s,I} = (P * X)_{s,I}
-C     O_{J,I} = X_{s,J} L_{s,I} = (X^{t} L)_{J,I},     where o is an elementwise (Hadamard) product
-C     O_{I,J} = (L^{t} X)_{I,J}
+C     L_{s,I} = (P * X)_{s,J}
+C     O_{I,J} = X_{s,I} L_{s,J} = (X^{t} L)_{I,J},     where o is an elementwise (Hadamard) product
 C     Q_{I,J}   = Z_{I,J} o O_{I,J} (no sum)
 C     F_{m,n} = Q_{I,J} X_{m,I} X_{n,J} = X Q X^{t}
 C     diag(n) - form a diagonal matrix from a vector n
@@ -56,18 +55,17 @@ C     other
       call tstcor (jend - 1, scrsz, 'ctrexc')
 
       if (isym .eq. 0) then
-         call ascale (ntt, -1.0d0, p, p)
          call square (p,v(jscr),nbasis,nbasis,3)
-C     scale by -1 to account for a negative contribution of the exchange
-C     as fofcou does
       elseif (isym .eq. 1) then
          call square (p,v(jscr),nbasis,nbasis,-3)
-C     Warning! Usual scaling by -1 is intentionally omitted here
-C     as we later on transpose this antisymmetric matrix, which restores -1
       else
          call gauerr ('ctrexc: unknown symmetry switch passed')
       endif
-            
+
+C     Make the exchange negative
+
+      call ascale (nbsq, -1.0d0, v(jscr), v(jscr))
+      
 C     form L
 
       if (isym .eq. 0) then
@@ -81,8 +79,8 @@ C     form L
       
 C     form O
 
-      call dgemm ('t', 'n', ngrid, ngrid, nbasis, 1.0d0, v(jl),
-     &     nbasis, x, nbasis, 0.0d0, v(jo), ngrid)
+      call dgemm ('t', 'n', ngrid, ngrid, nbasis, 1.0d0, x,
+     &     nbasis, v(jl), nbasis, 0.0d0, v(jo), ngrid)
 
 C     form Q
       
