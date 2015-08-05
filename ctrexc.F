@@ -58,6 +58,9 @@ C     other
          call square (p,v(jscr),nbasis,nbasis,3)
       elseif (isym .eq. 1) then
          call square (p,v(jscr),nbasis,nbasis,-3)
+         do 50 ii = 0, nbasis - 1
+            v(jscr+ii*(nbasis+1)) = 0.0d0
+ 50      continue
       else
          call gauerr ('ctrexc: unknown symmetry switch passed')
       endif
