@@ -1,12 +1,11 @@
       subroutine cpdfkmem (iout, iprint, iopcl, initf, nbasis, ngrid,
-     & x, z, nmat, nmats, nmatt, p, f, v, lenv)
+     & x, z, nmat, nmats, nmatt, pa, pb, fa, fb, v, lenv)
 
       implicit none
       
 C-----------------------------------------------------------------------------+
 C     This routine contracts densities with canonically decomposed integrals
-C     in a way similar to FoFCou operation. It is intended to be called from cpdfock,
-C     and works with one spin case per run.
+C     in a way similar to FoFCou operation.
 C     The integrals are Mulliken order, stored as:
 C
 C     (mn|rs) = X_{I,m} X_{I,n} Z_{I,J} X_{J,r} X_{J,s}
@@ -28,7 +27,7 @@ C
 C     The formulas for contraction can be found in ctrcou and ctrexc
 C      
 C     Arguments:
-C     [in]  iopcl   - type of the contraction (open/closed shell): does nothing now, (2*J-K)P is the contraction
+C     [in]  iopcl   - type of the contraction (open/closed shell)
 C     [in]  initf   - if we need to initialize the Fock matrix or to update current value
 C     [in]  nbasis  - basis size
 C     [in]  ngrid   - quadrature size
@@ -51,7 +50,7 @@ C     arguments
       integer     nbasis, ngrid
       integer     nmat, nmats, nmatt
       real*8      x(*), z(*)
-      real*8      p(*), f(*)
+      real*8      pa(*), pb(*), fa(*), fb(*)
       real*8      v(*)
       integer     lenv
 
@@ -82,36 +81,47 @@ C     Prepare for parallel run (NYI)
       
       call tstcor (max(lenscrco,lenscrex), lenv, 'cpdfkmem')
 
-C     do full contraction with the singlet symmetric part
-
+C     Do Coulomb part
       ioff = 1
       do 100 ii = 0, nmats - 1
          call ctrcou (iout, iprint, initf, 0, nbasis, ngrid, x,
-     &        z, p(1+ii*ntt), f(1+ii*ntt), v)
-C     Multiply Coulomb by 2 to comply to fofcou
-         call ascale (ntt, 2.0d0, f(ioff+ii*ntt), f(ioff+ii*ntt))
+     &        z, pa(1+ii*ntt), fa(1+ii*ntt), v)
  100  continue
 
-      do 150 ii = 0, nmats - 1
-         call ctrexc (iout, iprint, .false., 0, nbasis, ngrid, x,
-     &        z, p(1+ii*ntt), f(1+ii*ntt), v) 
- 150  continue
+C     multiply Coulomb by 2 if we are doing closed shell or
+C     add beta contribution for open shell
       
-C     do exchange part for triplets (symmetric)
+      if (iopcl .eq. 0) then
+         do 110 ii = 0, nmats - 1
+            call ascale(ntt, 2.0d0, pa(1+ii*ntt),pa(1+ii*ntt))
+ 110     continue
+      else
+         do 120 ii = 0, nmats - 1
+            call ctrcou (iout, iprint, .false., 0, nbasis, ngrid, x,
+     &           z, pb(1+ii*ntt), fa(1+ii*ntt), v)
+ 120     continue
+         if (initf) then
+            do 130 ii = 0, nmats - 1
+               call amove (ntt,fa(1+ii*ntt),fb(1+ii*ntt))
+ 130        continue
+         else
+            do 140 ii = 0, nmats - 1
+               call aadd (ntt,fa(1+ii*ntt),fb(1+ii*ntt),fb(1+ii*ntt))
+ 140        continue
+         endif
+      endif
+
+C     Add exchange to PA and PB
+
+      if (iopcl .eq. 0) then
+         call cpdexmem (iout, iprint, initf, nbasis, ngrid,
+     &        x, z, nmat, nmats, nmatt, pa, fa, v, lenv)
+      else
+         call cpdexmem (iout, iprint, initf, nbasis, ngrid,
+     &        x, z, nmat, nmats, nmatt, pa, fa, v, lenv)
+         call cpdexmem (iout, iprint, initf, nbasis, ngrid,
+     &        x, z, nmat, nmats, nmatt, pb, fb, v, lenv)
+         
+      endif
       
-      ioff = ntt*nmats + 1
-      do 200 ii = 0, nmatt - 1
-         call ctrexc (iout, iprint, initf, 0, nbasis, ngrid, x,
-     &        z, p(ioff+ii*ntt), f(ioff+ii*ntt), v)
- 200  continue
-
-C     do exchange for antisymmetric part
-
-      ioff  = ntt*(nmats + nmatt) + 1
-      nmata = nmat - nmats - nmatt
-      do 300 ii = 0, nmata - 1
-         call ctrexc (iout, iprint, initf, 1, nbasis, ngrid, x,
-     &        z, p(ioff+ii*ntt), f(ioff+ii*ntt), v)
- 300  continue
-
       end

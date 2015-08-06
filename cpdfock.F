@@ -98,13 +98,6 @@ C     input checks
 
       call cpdfkmem (iout, iprint, iopcl, initf, nbasis, ngrid,
      &        v(jx), v(jz), nmat, nmats, nmatt,
-     &        pa, fa, v(jend), lenv - jend)
-
-      if (iopcl .eq. 1) then 
-         call cpdfkmem (iout, iprint, iopcl, initf, nbasis,
-     &        ngrid,
-     &        v(jx), v(jz), nmat, nmats, nmatt,
-     &        pb, fb, v(jend), lenv - jend)
-      endif
+     &        pa, pb, fa, fb, v(jend), lenv - jend)
 
       end
