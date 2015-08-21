@@ -58,6 +58,6 @@ C     functions
       close (fhandle)
       return
 
- 2000 write (iout, *) 'outoctfmt: File access error!'
+ 2000 write (iout, *) 'outcsv: File access error!'
       
       end

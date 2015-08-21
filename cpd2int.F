@@ -180,13 +180,17 @@ C     debug integral decomposition
       integer     irwria, irwrib
       integer     ndbf6d
       real*8      normfro, froful, frodiff
-      real*8      outbuf(5)
+      real*8      outbuf(6)
 
 C     debug Fock matrices
       
       integer     jrhoa, jrhob, jfa, jfb, jscr, ntt
       integer     nmat, nmats, nmatt
       real*8      xx
+
+C     custom grids
+
+      integer     ngrdrd, ii
       
 C     .. prism variables ..
 
@@ -300,8 +304,10 @@ C     testing decomposition options
 
       if ( iop(78) .gt. 0 ) then
          tests = .true.
+         write(iout,'(A)') ' testing of decomposition requested!!!'
          if ( ( iop(78) / 10 ) .gt. 0 ) then
             testsprint = .true.
+            write(iout,'(A)') ' will output results to CSV file'
          else
             testsprint = .false.
          endif
@@ -356,21 +362,6 @@ C     Get 6d basis used with all quadratures
       
       write (iout, *)
       
-C------------------------------------------------------------------------------+
-C     Fixme: frmquad breaks PRISM settings, hence integral formation done first
-C------------------------------------------------------------------------------+     
-
-c$$$      if (.not. ri) then
-c$$$         call frm2eints (iout, iprint, jsym2e, neq, neqshl, neqsh2,
-c$$$     &     accdes, .false., jj, irw2efull, v(jend), lenv)
-c$$$
-c$$$      else
-c$$$         call frm2eri (iout, iprint, jsym2e, neq, neqshl, 
-c$$$     &        neqsh2, ir12, .false., .false., itol, accdes, jj,
-c$$$     &        jj, irwria, irwrib, v(jend), lenv - jend)
-c$$$
-c$$$      endif
-
 C-----------------------------------------------------------------------------+
 C     Compute the collocation matrix X(mu,G) and save it to the RWF irwfac    |
 C-----------------------------------------------------------------------------+
@@ -446,12 +437,12 @@ C----------------------------------------------------------------------------+
      &     accdes, .false.,.true., junk, irw2efull, v(jend), lenv)
 
          call tstcor (nbasis**4, lenv - jend, 'cpd2int: testing')
-         call fileio(2,-irw2efull,nbasis**4,v(jend),0)
-         dims(1) = nbasis
-         dims(2) = nbasis
-         dims(3) = nbasis
-         dims(4) = nbasis
-         call outoctfmt(iout, 'ints.mat', 1, 'ints', 4, dims, v(jend))         
+c$$$         call fileio(2,-irw2efull,nbasis**4,v(jend),0)
+c$$$         dims(1) = nbasis
+c$$$         dims(2) = nbasis
+c$$$         dims(3) = nbasis
+c$$$         dims(4) = nbasis
+c$$$         call outoctfmt(iout, 'ints.mat', 1, 'ints', 4, dims, v(jend))         
          
          froful=normfro(iout, iprint, nbasis, irw2efull, v(jend), lenv)
          
@@ -472,19 +463,31 @@ C----------------------------------------------------------------------------+
          if (testsprint) then
             outbuf(1) = dble(nbasis)
             outbuf(2) = dble(ngrid)
-            outbuf(3) = froful
-            outbuf(4) = frodiff
-            outbuf(5) = frodiff / froful
-            call outcsv (iout, 'l325_summary.csv', 2, 5, outbuf)
+            outbuf(3) = dble(nrank)
+            outbuf(4) = froful
+            outbuf(5) = frodiff
+            outbuf(6) = frodiff / froful
+            call outcsv (iout, 'l325_summary.csv', 2, 6, outbuf)
          endif
          
       endif
 
 C---------------------------------------------------------------------------+
+C     reading external files
+C---------------------------------------------------------------------------+
+c$$$      call readfmt(iout, 'grid.dat', '(50X,E24.16,25X)',ngrdrd, v(jend),
+c$$$     &     lenv)
+c$$$      write(iout, *) 'Read values count: ', ngrdrd
+c$$$      write(iout, *) 'First 5 values:'
+c$$$      write(iout,'(1X,E24.16)') (v(jend + ii), ii=0,4)
+c$$$      write(iout, *) 'Last 5 values:'
+c$$$      write(iout,'(1X,E24.16)') (v(jend + ngrdrd - 5 + ii), ii=0,4)
+      
+C---------------------------------------------------------------------------+
 C     testing Fock matrices                                                 |
 C---------------------------------------------------------------------------+      
       
-      dbgprint = .true.
+      dbgprint = .false.
       if (dbgprint) then
          ntt   = nbasis*(nbasis+1)/2
          nbsq  = nbasis*nbasis
@@ -501,7 +504,7 @@ C---------------------------------------------------------------------------+
          nmat  = 3
          nmats = 1
          nmatt = 1
-         iopcl = 0
+         iopcl = 1
 
          do 1100 junk = 0, nmats - 1
             call symmetric (iout, .true., nbasis, 0, v(jscr))
@@ -509,18 +512,37 @@ C---------------------------------------------------------------------------+
             call linear (v(jscr), v(jrhoa + junk*ntt), nbasis, nbasis)
  1100    continue
          do 1200 junk = 0, nmatt - 1 
-            call symmetric (iout, .true., nbasis, 0, v(jscr))
+            call symmetric (iout, .false., nbasis, 0, v(jscr))
             call outoctfmt (iout, 'pa.mat', 2, 'pat', 2, dims, v(jscr))
             call linear (v(jscr), v(jrhoa+ntt*nmats+junk*nmatt), nbasis,
      &    nbasis)
  1200    continue
          do 1300 junk = 0, nmat - nmats - nmatt - 1 
-            call symmetric (iout, .true., nbasis, 1, v(jscr))
+            call symmetric (iout, .false., nbasis, 1, v(jscr))
             call outoctfmt (iout, 'pa.mat', 2, 'paa', 2, dims, v(jscr))
             call linear (v(jscr), v(jrhoa+(nmats+nmatt)*ntt+junk*ntt),
      &           nbasis, nbasis)
  1300    continue
-C     set up PBC information
+
+         do 1150 junk = 0, nmats - 1
+            call symmetric (iout, .false., nbasis, 0, v(jscr))
+            call outoctfmt (iout, 'pb.mat', 1, 'pbs', 2, dims, v(jscr))
+            call linear (v(jscr), v(jrhob + junk*ntt), nbasis, nbasis)
+ 1150    continue
+         do 1250 junk = 0, nmatt - 1 
+            call symmetric (iout, .false., nbasis, 0, v(jscr))
+            call outoctfmt (iout, 'pb.mat', 2, 'pbt', 2, dims, v(jscr))
+            call linear (v(jscr), v(jrhob+ntt*nmats+junk*nmatt), nbasis,
+     &    nbasis)
+ 1250    continue
+         do 1350 junk = 0, nmat - nmats - nmatt - 1 
+            call symmetric (iout, .false., nbasis, 1, v(jscr))
+            call outoctfmt (iout, 'pb.mat', 2, 'pba', 2, dims, v(jscr))
+            call linear (v(jscr), v(jrhob+(nmats+nmatt)*ntt+junk*ntt),
+     &           nbasis, nbasis)
+ 1350    continue
+
+C         set up PBC information
       
          call getpbc(npdir, celvec)
          jpbcsta = jend
@@ -577,19 +599,30 @@ C     Fill arrays with symmetry related quantities.
      $ junk,xx,v(jend),v(jend),lenv-jend+1)
 
          do 2100 junk = 0, nmats - 1
-            call square (v(jfa+junk*ntt), v(jscr), nbasis, nbasis, 3)
-            call outoctfmt(iout, 'fa.mat', 1, 'fas', 2, dims, v(jscr))         
+            call outoctfmt(iout, 'fa.mat', 1, 'fas', 1, ntt,
+     &           v(jfa+junk*ntt))         
  2100    continue
          do 2200 junk = 0, nmatt - 1
-            call square (v(jfa+nmats*ntt+junk*ntt), v(jscr), nbasis,
-     &           nbasis, 3)
-            call outoctfmt(iout, 'fa.mat', 2, 'fat', 2, dims, v(jscr))         
+            call outoctfmt(iout, 'fa.mat', 2, 'fat', 1, ntt,
+     &           v(jfa+nmats*ntt+junk*ntt))         
  2200    continue
          do 2300 junk = 0, nmat - nmats - nmatt - 1
-            call square (v(jfa+(nmats+nmatt)*ntt+junk*ntt), v(jscr),
-     &           nbasis, nbasis, -3)
-            call outoctfmt(iout, 'fa.mat', 2, 'faa', 2, dims, v(jscr))         
+            call outoctfmt(iout, 'fa.mat', 2, 'faa', 1, ntt,
+     &           v(jfa+(nmats+nmatt)*ntt+junk*ntt))         
  2300    continue
+
+         do 2150 junk = 0, nmats - 1
+            call outoctfmt(iout, 'fb.mat', 1, 'fbs', 1, ntt,
+     &           v(jfb+junk*ntt))         
+ 2150    continue
+         do 2250 junk = 0, nmatt - 1
+            call outoctfmt(iout, 'fb.mat', 2, 'fbt', 1, ntt,
+     &           v(jfb+nmats*ntt+junk*ntt))         
+ 2250    continue
+         do 2350 junk = 0, nmat - nmats - nmatt - 1
+            call outoctfmt(iout, 'fb.mat', 2, 'fba', 1, ntt,
+     &           v(jfb+(nmats+nmatt)*ntt+junk*ntt))         
+ 2350    continue
 
          call cpdfock (iout, iprint, iopcl, -1, nbasis, ngrid, 
      &    irwfac,
@@ -598,19 +631,30 @@ C     Fill arrays with symmetry related quantities.
      &        v(jend), lenv-jend)
 
          do 3100 junk = 0, nmats - 1 
-            call square (v(jfa+junk*ntt), v(jscr), nbasis, nbasis, 3)
-            call outoctfmt(iout, 'fai.mat', 1, 'fais', 2, dims, v(jscr))         
+            call outoctfmt(iout, 'fai.mat', 1, 'fais', 1, ntt,
+     &           v(jfa+junk*ntt))         
  3100    continue
          do 3200 junk = 0, nmatt - 1
-            call square (v(jfa+nmats*ntt+junk*ntt), v(jscr), nbasis,
-     &           nbasis, 3)
-            call outoctfmt(iout, 'fai.mat', 2, 'fait', 2, dims, v(jscr))         
+            call outoctfmt(iout, 'fai.mat', 2, 'fait', 1, ntt,
+     &   v(jfa+nmats*ntt+junk*ntt))         
  3200    continue
          do 3300 junk = 0, nmat - nmats - nmatt - 1
-            call square (v(jfa+(nmats+nmatt)*ntt+junk*ntt), v(jscr),
-     &       nbasis, nbasis, -3)
-            call outoctfmt(iout, 'fai.mat', 2, 'faia', 2, dims, v(jscr))         
+            call outoctfmt(iout, 'fai.mat', 2, 'faia', 1, ntt,
+     &           v(jfa+(nmats+nmatt)*ntt+junk*ntt))         
  3300    continue
+
+         do 3150 junk = 0, nmats - 1 
+            call outoctfmt(iout, 'fbi.mat', 1, 'fbis', 1, ntt,
+     &           v(jfb+junk*ntt))         
+ 3150    continue
+         do 3250 junk = 0, nmatt - 1
+            call outoctfmt(iout, 'fbi.mat', 2, 'fbit', 1, ntt,
+     &   v(jfb+nmats*ntt+junk*ntt))         
+ 3250    continue
+         do 3350 junk = 0, nmat - nmats - nmatt - 1
+            call outoctfmt(iout, 'fbi.mat', 2, 'fbia', 1, ntt,
+     &           v(jfb+(nmats+nmatt)*ntt+junk*ntt))         
+ 3350    continue
          
       endif
       
