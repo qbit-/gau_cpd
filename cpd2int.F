@@ -131,9 +131,9 @@ C     other variables
 
 C     CPD2E RWF files
 
-      integer     irwfac, irwfact, irwspo, irwz, irwe
+      integer     irwfac, irwspo, irwz, irwe
 
-      parameter   ( irwfac = 824, irwfact = 825, irwspo = 826 )
+      parameter   ( irwfac = 824, irwspo = 826 )
       parameter   ( irwe = 827, irwz = 828)
 
 C     Gaussian RWF files
@@ -325,8 +325,6 @@ C     Metric to use with RI: 1 - 1/r, 2 - overlap
       ir12 = mod (iop(109), 100000) / 10000
       if (ir12 .eq. 0) ir12 = 1
 
-
-      
 C     Restore /IBF/
 
       call fileio (2, -irwibf, intowp (30), ibf, 0)

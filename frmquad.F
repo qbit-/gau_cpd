@@ -1,5 +1,5 @@
       subroutine frmquad (iout, iprint, iradan, iranwt, irangd, iopcl,
-     & ngridu, irwfac, irwfact, v ,lenv)
+     & ngridu, irwfac, v ,lenv)
 
       implicit none
       
@@ -19,7 +19,6 @@ C     [in]  iranwt, irangd - selects cutoffs for the grid (?)
 C     [in]  iopcl   - usual WF selection parameter
 C     [out] ngridu  - size of the grid
 C     [out] irwfac  - RWF for storing X (initialized here)
-C     [out] irwfact - RWF for X transpose (initialized here)
 C     
 C-----------------------------------------------------------------------------+
 #include "commonmol.inc"
@@ -28,7 +27,7 @@ C     arguments
       
       integer     iout, iprint
       integer     iradan, iranwt, irangd
-      integer     iopcl, ngridu, irwfac, irwfact
+      integer     iopcl, ngridu, irwfac
       real*8      v(*)
       integer     lenv
 
