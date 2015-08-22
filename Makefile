@@ -40,7 +40,7 @@ MAIN325 = ml325.o
 OBJ325  = atquadwrt.o cpd2int.o ctrmemest1.o ctrmemest_nd.o ctrmemest2.o frm2eints.o frm2eri.o frmemt.o frmemt_nd.o frmemtri.o frmquad.o frmria.o frmrib.o frmspovinv.o \
 	  frmz.o updmatf.o
 TEMPOBJ = asubf.o cpdfock.o cpdfkmem.o cpdexmem.o ctrcou.o ctrexc.o frmspovinv_blas.o normfro.o outcsv.o outoctfmt.o reconstr.o symmetric.o toeplitz.o \
-	  readfmt.o
+	  readfmt.o frmextquad.o
 
 OBJGAU =
 #numin3.o

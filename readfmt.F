@@ -1,4 +1,4 @@
-      subroutine readfmt (iout, filenm, fmt, nelem, v, lenv)
+      subroutine readfmt (iout, filenm, fmt, irecln, nelem, v, lenv)
       implicit none
 C     Writes an array as 1 line in CSV format to file filenm
 C     
@@ -6,6 +6,7 @@ C     Arguments:
 C     
 C     filenm - [in]  file name to read from
 C     fmt    - [in]  record format
+C     irecln - [in]  number of elements in each record. Must match fmt
 C     nelem  - [out] length read
 C     v      - [out] buffer
 C     lenv   - [in]  length of the buffer. If negative, a warning is printed 
@@ -15,7 +16,7 @@ C     Arguments:
 
       integer     iout
 
-      integer     nelem, lenv
+      integer     nelem, lenv, irecln
       real*8      v(*)
       character   filenm*(*)
       character   fmt*(*)
@@ -24,6 +25,7 @@ C     Other
 
       integer     lstr1, lstr2
       integer     iostat, fhandle
+      integer     ii
       character   blank*80
       logical     exist, warn
 
@@ -54,7 +56,8 @@ C     functions
 
       nelem = 0
       do 10 while (nelem .lt. lenv)
-         read(fhandle,fmt(1:lstr2),IOSTAT=iostat,err = 100) v(nelem + 1)
+         read(fhandle,fmt(1:lstr2),IOSTAT=iostat,err = 100)
+     &    (v(nelem + ii + 1), ii = 0, irecln - 1)
          if (iostat .gt. 0) then
             write (iout, '(A, A, I4, A)') 'readcsv: file ',
      &           filenm(1:lstr1),
@@ -62,7 +65,7 @@ C     functions
          else if (iostat .lt. 0) then
             goto 20
          else
-            nelem = nelem + 1
+            nelem = nelem + irecln
          endif
  10   continue 
  20   continue

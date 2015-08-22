@@ -187,11 +187,7 @@ C     debug Fock matrices
       integer     jrhoa, jrhob, jfa, jfb, jscr, ntt
       integer     nmat, nmats, nmatt
       real*8      xx
-
-C     custom grids
-
-      integer     ngrdrd, ii
-      
+       
 C     .. prism variables ..
 
 #include "repall.inc"      
@@ -472,17 +468,6 @@ c$$$         call outoctfmt(iout, 'ints.mat', 1, 'ints', 4, dims, v(jend))
          
       endif
 
-C---------------------------------------------------------------------------+
-C     reading external files
-C---------------------------------------------------------------------------+
-c$$$      call readfmt(iout, 'grid.dat', '(50X,E24.16,25X)',ngrdrd, v(jend),
-c$$$     &     lenv)
-c$$$      write(iout, *) 'Read values count: ', ngrdrd
-c$$$      write(iout, *) 'First 5 values:'
-c$$$      write(iout,'(1X,E24.16)') (v(jend + ii), ii=0,4)
-c$$$      write(iout, *) 'Last 5 values:'
-c$$$      write(iout,'(1X,E24.16)') (v(jend + ngrdrd - 5 + ii), ii=0,4)
-      
 C---------------------------------------------------------------------------+
 C     testing Fock matrices                                                 |
 C---------------------------------------------------------------------------+      
