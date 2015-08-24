@@ -1,5 +1,6 @@
       subroutine frmextquad (iout, iprint, filenm, iunits, 
      & nbas6d, ngrid, irwfac, v, lenv)
+
       implicit none
 
 C     Forms quadrature using weights and grid points supplied externally
@@ -10,7 +11,8 @@ C     [in]  iunits     - units used for coordinates. 0 - bohr, >0 - angstrom
 C     [in]  nbas6d    - number of basis functions (Cartesian)
 C     [out] irwfac    - file unit to output the quadrature
 C     [out] ngrid     - number of grid points found in file
-C
+
+#include "commonb2.inc"
       
 C     Arguments:
       integer    iout, iprint, lenv
@@ -24,9 +26,15 @@ C     Other:
       real*8      xx(1)
       real*8      conv, psi4bohr2A
 
+C     CommonB2    block
+      integer     janb, nshelb, maxtyb
+      
 C     this is a PSI4 Bohr to Angstrom constant
       parameter   ( psi4bohr2A = 0.52917720859d0 )
 
+C     Load /B2/ with the density basis.
+      Call RdWrB(-10,0)
+      
       jend = 1
       call readfmt(iout, 'grid.dat', '(4E25.16)', 4, nval,
      &     v(jend), lenv)
@@ -66,10 +74,10 @@ C     decide if we convert units
          conv = psi4bohr2A
          call ascale(ngrid*3, conv, v(jgrid), v(jgrid))
       endif
-      
-      call evalbf(iout,iprint,1,ngrid,nbas6d, v(jgrid),v(jchi),xx,xx,xx,
-     &     v(jend), v(jend), lenv - jend)
 
+      call evalbf(iout,iprint,1,ngrid,nbas6d,v(jgrid),v(jchi),xx,xx,
+     & v(jend),v(jend),lenv - jend)
+      
 C     take weight^(1/4)
       do 50 ii = 0, ngrid - 1
          v(jweight) = dsqrt(dsqrt(v(jweight)))

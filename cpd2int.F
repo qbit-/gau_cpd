@@ -116,6 +116,8 @@ C     general option variables
 
       integer     iradandef, iranwtdef, irangddef
       parameter   ( iradandef = 8012, iranwtdef = -1, irangddef = 0 )
+
+      logical     extgrid
       
 C     memory allocation variables
 
@@ -181,7 +183,7 @@ C     debug integral decomposition
       integer     ndbf6d
       real*8      normfro, froful, frodiff
       real*8      outbuf(6)
-
+      
 C     debug Fock matrices
       
       integer     jrhoa, jrhob, jfa, jfb, jscr, ntt
@@ -216,6 +218,7 @@ C     format statements
  1010 format (' iprint = ', I2)
  1011 format ('   grid selection:')      
  1012 format (' iradan = ', I6, ' iranwt = ', I5, ' irangd = ', I5)
+ 1013 format (' custom grid from file "grid.dat" will be used')
  1020 format (' accuracy = ',D8.3, ' pseudoinv. tolerance = ', D8.3)
  1021 format (' exact integrals will be used ')
  1022 format (' density fitted integrals will be used ')
@@ -277,6 +280,13 @@ C     Defaults if nothing is set
       write (iout, 1011)
       write (iout, 1012) iradan, iranwt, irangd
 
+C     Decide on external grid
+      
+      if (iop(79) .gt. 0) then
+         extgrid = .true.
+         write (iout, 1013)
+      endif
+      
 C     Desired accuracy and pseudoinversion tolerance for spatial overlap
 
       accdes = decacc (0, 0.0d0, .false.)
@@ -353,16 +363,19 @@ C     Get 6d basis used with all quadratures
       call getnb6(nbas6d)
       if (nbasis .ne. nbas6d)
      &  call gauerr ('Spherical bases are not supported yet')
-      
       write (iout, *)
       
 C-----------------------------------------------------------------------------+
 C     Compute the collocation matrix X(mu,G) and save it to the RWF irwfac    |
 C-----------------------------------------------------------------------------+
 
-      call frmquad (iout, iprint, iradan, iranwt, irangd, iopcl,
-     & ngrid, irwfac, irwfact, v(jend), lenv - jend)
-
+      if (extgrid) then
+         call frmextquad (iout, iprint, 'grid.dat', 0, 
+     &        nbas6d, ngrid, irwfac, v(jend), lenv - jend)
+      else
+         call frmquad (iout, iprint, iradan, iranwt, irangd, iopcl,
+     &        ngrid, irwfac, v(jend), lenv - jend)
+      endif
 C-----------------------------------------------------------------------------+      
 C     Compute spatial overlap using collocation from irwfac                   |
 C-----------------------------------------------------------------------------+      
