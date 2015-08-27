@@ -15,8 +15,6 @@ C
 C     Code flow:  
 C     estimate memory requirements and sizes
 C     
-C
-C     Algorithm 1: If 
 C     for each block of P 
 C       for each block of kl indicies do in parallel 
 C       get (ij | kl)
@@ -67,7 +65,8 @@ C     other
       integer    jnumkl, jnuml, jnumk, jnump, jnumq
       integer    jk, jl, jp, jq 
       integer    jkl
-
+      integer    iupd
+      
       integer    ikl, ip, iq
       integer    ioff, ldlen
 
@@ -107,6 +106,17 @@ C     Load required quantities if we keep them in memory
          call fileio(2,-irwfac,ngrid*nbasis,v(jx),0)
          jend = jx + ngrid*nbasis
       endif
+
+C     Allocate RWF for the E matrix
+      
+      call conddf (irwe, ngrid*ngrid)
+
+C     Fill RWF with zeros if we are not going to write
+C     the full size matrix in the first pass
+
+      if ((nump .ne. ngrid) .or. (numq .ne. ngrid)) then
+         call aclearf (ngrid*ngrid, irwe, v(jend), lenv - jend)
+      endif
       
 C     Memory allocation
 
@@ -120,12 +130,9 @@ C     Memory allocation
 
       call tstcor (jend-1, lenv, 'frmemt: memory allocation')
 
-C     Allocate RWF for the E matrix
-      
-      call conddf (irwe, ngrid*ngrid)
-      
 C     Top of the contraction loop
-
+      iupd = 0
+      
 C     Loop over left quadrature
 
       do 100 jp = 0, ngrid - 1, nump
@@ -226,9 +233,10 @@ C
             call dgemm ('n', 'n', jnump, jnumq, jnumkl, 1.0d0,
      &           v(jfbuf), jnump, v(jscr), jnumkl, 0.0d0,
      &           v(jebuf), jnump)
-            
+
             call updmatf (iout, iprint, ngrid, jp, jnump, ngrid, jq,
-     &           jnumq, v(jebuf), irwe, 1, v(jend), lenv - jend)
+     &           jnumq, v(jebuf), irwe, iupd, v(jend), lenv - jend)
+            if (iupd .eq. 0) iupd = 1
  300     continue
 
          jkl = jkl + jnumkl
