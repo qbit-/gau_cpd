@@ -10,7 +10,7 @@ INTELPATH = $(INTELROOT)/lib/intel64
 MKLPATH = $(MKLROOT)/lib/intel64
 MKLINCLUDE = -I$(MKLROOT)/include -I$(INTELROOT)/include
 PROFFLAG = #-Mprof=func
-FC0      = pgf77
+FC0      = pgf77 -i8
 #FC0 = pgf90 -Wl,-z,muldefs
 #FC2 = -Wl"-M /dev/null -D DUPENTRY=NOTE -D FORCE=OFF -f indef"
 

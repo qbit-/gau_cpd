@@ -102,7 +102,9 @@ C     In this case we don't need the numq*nbasis term
          numq = (lenv - nump*nbasis - nbsq*numkl - nump*numkl -
      &           nump*nbasis)/(numkl + nump + nbasis)
       endif
-
+C     Limit numq if it's larger then the grid size
+      if (numq .gt. ngrid) numq = ngrid
+      
       if (numq .lt. 1) 
      &     call gauerr('Insufficient memory in ctrmemest:2')
       

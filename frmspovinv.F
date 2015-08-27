@@ -30,6 +30,11 @@ C     other variables
 C     functions
       real*8     gfloat
       
+C     formats
+
+ 100  format (' Overlap: min. sing. value = ', E20.12,
+     & '  Сond. number = ', E20.12)
+ 110  format ('          rank = ', I8)
 C     define sizes
       
       lenx   = nbasis * ngrid
@@ -77,6 +82,10 @@ C     form S(P,Q)^(-1)
       tol = Gfloat(10)**(-itol)
       call geninv(iout,iprint,'S', 0, tol, ngrid, v(js), v(ju),
      &     v(jsv), .false., xx, nrank, v(jend), lenv - jend)
+
+C     print summary
+      write (iout, 100) v(jsv+nrank-1), v(jsv) / v(jsv+nrank-1)
+      write (iout, 110) nrank
       
 C     save S^-1
       call fileio (1, -irwspo, lenspk, v(js), 0) 

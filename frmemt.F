@@ -89,7 +89,7 @@ C     functions
 
       call ctrmemest1(iout, iprint, nbasis, ngrid, keepints, keepx,  
      &     numkl, nump, numq, lenwbuf, lenfbuf, lenxbufp, lenxbufq,
-     &     lenscr, lenebuf, v(jend), lenv) 
+     &     lenscr, lenebuf, v(jend), lenv - jend) 
 
 C---------------------------------------------------+      
 C     Compute integrals                             |
@@ -219,7 +219,7 @@ C     THIS PART WILL FAIL IF L=1, K<NBASIS
 
                  
               call updmatf (iout, iprint, ngrid, jp, jnump, ngrid, jq,
-     &                jnumq, v(jebuf), irwe, 1, v(jend), lenv)
+     &                jnumq, v(jebuf), irwe, 1, v(jend), lenv - jend)
  300       continue
  200    continue
 

@@ -136,7 +136,7 @@ C     CPD2E RWF files
       integer     irwfac, irwspo, irwz, irwe
 
       parameter   ( irwfac = 824, irwspo = 826 )
-      parameter   ( irwe = 827, irwz = 828)
+      parameter   ( irwe = 827, irwz = 828 )
 
 C     Gaussian RWF files
 C       - irwgen - general array (see Link 1 for details)
@@ -310,7 +310,7 @@ C     testing decomposition options
 
       if ( iop(78) .gt. 0 ) then
          tests = .true.
-         write(iout,'(A)') ' testing of decomposition requested!!!'
+         write(iout,'(A)') ' Testing of the decomposition is requested '
          if ( ( iop(78) / 10 ) .gt. 0 ) then
             testsprint = .true.
             write(iout,'(A)') ' will output results to CSV file'
@@ -405,6 +405,17 @@ C-----------------------------------------------------------------------------+
       call frmz(iout, iprint, ngrid, irwspo, irwe, irwz, v(jend), lenv
      & - jend) 
 
+C-----------------------------------------------------------------------------+
+C     Print some summary                                                      |
+C-----------------------------------------------------------------------------+
+      if (iprint .gt. 0) then
+         write (iout, '(A,I20)') ' basis size = ', nbasis
+         write (iout, '(A,I20)') ' grid size = ', ngrid
+         write (iout, '(A,I20)') ' overlap rank = ', nrank
+         if (ri) write (iout, '(A,I20)') ' ndbf = ', ndbf6d
+      endif
+
+      
 C     save number of grid points for other routines
 
       call ilsw (1, 80, ngrid)
@@ -433,6 +444,19 @@ C----------------------------------------------------------------------------+
          
          call fileio(2,-irwz,ngrid*ngrid,v(jend),0)
          call outoctfmt(iout, 'z.mat', 1, 'z', 2, dims, v(jend))         
+
+         call tstcor (nbasis**4, lenv - jend, 'cpd2int: testing')
+
+         call frm2eints (iout, iprint, jsym2e, neq, neqshl, neqsh2,
+     &        accdes, .false.,.true., junk, irw2efull, v(jend), lenv
+     &    - jend)
+
+         call fileio(2,-irw2efull,nbasis**4,v(jend),0)
+         dims(1) = nbasis
+         dims(2) = nbasis
+         dims(3) = nbasis
+         dims(4) = nbasis
+         call outoctfmt(iout, 'ints.mat', 1, 'ints', 4, dims, v(jend))         
       endif
 
 C----------------------------------------------------------------------------+
@@ -441,9 +465,10 @@ C----------------------------------------------------------------------------+
       
       if (tests) then
          call frm2eints (iout, iprint, jsym2e, neq, neqshl, neqsh2,
-     &     accdes, .false.,.true., junk, irw2efull, v(jend), lenv)
+     &        accdes, .false.,.true., junk, irw2efull, v(jend),
+     &   lenv - jend)
 
-         call tstcor (nbasis**4, lenv - jend, 'cpd2int: testing')
+c$$$         call tstcor (nbasis**4, lenv - jend, 'cpd2int: testing')
 c$$$         call fileio(2,-irw2efull,nbasis**4,v(jend),0)
 c$$$         dims(1) = nbasis
 c$$$         dims(2) = nbasis
@@ -451,21 +476,24 @@ c$$$         dims(3) = nbasis
 c$$$         dims(4) = nbasis
 c$$$         call outoctfmt(iout, 'ints.mat', 1, 'ints', 4, dims, v(jend))         
          
-         froful=normfro(iout, iprint, nbasis, irw2efull, v(jend), lenv)
+         froful=normfro(iout, iprint, nbasis, irw2efull, v(jend), lenv
+     &    - jend)
          
          call reconstr (iout, iprint, nbasis, ngrid,
-     &        irwfac, irwz, irwrec, v(jend), lenv)
+     &        irwfac, irwz, irwrec, v(jend), lenv - jend)
          
-         call asubf(iout,iprint,nbasis,irw2efull,irwrec, v(jend), lenv) 
-         frodiff=normfro (iout, iprint, nbasis, irwrec, v(jend), lenv)
+         call asubf(iout,iprint,nbasis,irw2efull,irwrec, v(jend), lenv
+     &    - jend) 
+         frodiff=normfro (iout, iprint, nbasis, irwrec, v(jend), lenv
+     &    - jend)
 
-         write (iout, '(A,I20)') ' nbasis = ', nbasis
-         write (iout, '(A,I20)') ' ngrid = ', ngrid
-         write (iout, '(A,I20)') ' nrank = ', nrank
-         write (iout, '(A,E20.12)') ' full = ', froful
-         write (iout, '(A,E20.12)') ' diff = ', frodiff
-         write (iout, '(A,E20.12)') ' frac % = ', frodiff / froful * 100
+         write (iout, '(A,I20)')    ' nbasis = ', nbasis
+         write (iout, '(A,I20)')    ' ngrid  = ', ngrid
+         write (iout, '(A,I20)')    ' rank   = ', nrank
          if (ri) write (iout, '(A,I20)') ' ndbf = ', ndbf6d
+         write (iout, '(A,E20.12)') ' full   = ', froful
+         write (iout, '(A,E20.12)') ' diff   = ', frodiff
+         write (iout, '(A,E20.12)') ' frac % = ', frodiff / froful * 100
          
          if (testsprint) then
             outbuf(1) = dble(nbasis)

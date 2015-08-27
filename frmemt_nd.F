@@ -74,18 +74,19 @@ C     other
       logical    keepints, keepx
 
 C     integer    irw2efull
+
       
 C     functions
-      
-      double precision     ddot
 
+      double precision     ddot
+      
 
       jend = 1 
       nbsq = nbasis*nbasis
 
       call ctrmemest_nd(iout, iprint, nbasis, ngrid, keepints, 
      &     keepx, numkl, nump, numq, lenwbuf, lenfbuf, lenxbufp,
-     &     lenxbufq, lenscr, lenebuf, v(jend), lenv) 
+     &     lenxbufq, lenscr, lenebuf, v(jend), lenv - jend) 
 
 C---------------------------------------------------+      
 C     Compute integrals                             |
@@ -227,7 +228,7 @@ C
      &           v(jebuf), jnump)
             
             call updmatf (iout, iprint, ngrid, jp, jnump, ngrid, jq,
-     &           jnumq, v(jebuf), irwe, 1, v(jend), lenv)
+     &           jnumq, v(jebuf), irwe, 1, v(jend), lenv - jend)
  300     continue
 
          jkl = jkl + jnumkl

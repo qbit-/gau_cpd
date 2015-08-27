@@ -35,6 +35,10 @@ C     Functions
       
  1000 format(' Eigenvalues of S:',/,10(1PD10.2))
  1020 format(' SDV returned info=',I12,' to frmspovinv.')
+ 1100  format (' Overlap: min. sing. value = ', E20.12,
+     & '  Сond. number = ', E20.12)
+ 1110  format ('          rank = ', I8)
+
       
 C     define sizes
       lenx = nbasis * ngrid
@@ -117,6 +121,10 @@ C     assemble back
      & 0, v(js), ngrid, ngrid, ngrid, ngrid)
 
       call linear (v(js),v(js), ngrid, ngrid)
+C     print summary
+      write (iout, 1100) v(jsv+nrank-1), v(jsv) / v(jsv+nrank-1)
+      write (iout, 1110) nrank
+      
 C     save S^-1
       call fileio (1, -irwspo, lenspk, v(js), 0) 
       
