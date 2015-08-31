@@ -72,8 +72,9 @@ C     other
       integer    nbasis, nbsq, ngrid, ndbf
       integer    numkl, nump, numq
       integer    jnumkl, jnuml, jnumk, jnump, jnumq
-      integer    jk, jl, jp, jq 
+      integer    jp, jq 
       integer    jkl, jklx 
+      integer    iupd
 
       integer    ikl, ip, iq, ik, il, ij
       integer    ioff, ldlen
@@ -129,6 +130,17 @@ C     Allocate files for half projected integrals and half projected integrals t
          j2eint = jend
          jend   = jend + next
       endif
+
+C     Allocate RWF for the E matrix
+      
+      call conddf (irwe, ngrid*ngrid)
+
+C     Fill RWF with zeros if we are not going to write
+C     the full size matrix in the first pass
+
+      if ((nump .ne. ngrid) .or. (numq .ne. ngrid)) then
+         call aclearf (ngrid*ngrid, irwe, v(jend), lenv - jend)
+      endif
       
 C     Memory allocation
       
@@ -142,14 +154,8 @@ C     Memory allocation
 
       call tstcor (jend-1, lenv, 'frmemtri: memory allocation')
 
-C     Allocate RWF for the E matrix
-      
-      call conddf (irwe, ngrid*ngrid)
-
 C     Top of the contraction loop
       jkl = 0
-      jk  = 0
-      jl  = 0
  100  continue
 
 C     Ugly stepsize computation. We always round to whole counts 
@@ -232,7 +238,8 @@ C     Form A(L, Q) = S(L, M)^(-1) * F(M, Q)
 
  300    continue
         
-C     Block matrix multiplication to form E(P, Q) =  F(P, L) * A(L, Q) 
+C     Block matrix multiplication to form E(P, Q) =  F(P, L) * A(L, Q)
+        iupd = 0
         do 400 jp = 0, ngrid - 1, nump
            if (jp + nump .gt. ngrid) then
               jnump = ngrid - jp
@@ -261,7 +268,8 @@ C     Block matrix multiplication to form E(P, Q) =  F(P, L) * A(L, Q)
      &    v(jxbufp), ndbf, v(jxbufq), ndbf, 0.0d0, v(jebuf), jnump)  
 
               call updmatf (iout, iprint, ngrid, jp, jnump, ngrid, jq,
-     &    jnumq, v(jebuf), irwe, 1, v(jscr), lenscr)
+     &             jnumq, v(jebuf), irwe, iupd, v(jscr), lenscr)
+              if (iupd .eq. 0) iupd = 1
  500       continue
  400    continue
         

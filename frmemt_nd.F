@@ -77,7 +77,7 @@ C     integer    irw2efull
       
 C     functions
 
-      double precision     ddot
+      real*8     ddot
       
 
       jend = 1 
