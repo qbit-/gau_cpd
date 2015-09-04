@@ -53,7 +53,7 @@ C     and weight Chi to form X
             
             mu = sigbfn(mu1)
             scr((ig-1)*nbas6d + mu) =
-     &  dsqrt(weight(ig)) * chi(ig,mu1)
+     &  dsqrt(dsqrt(weight(ig))) * chi(ig,mu1)
             
  120     continue
  110  continue

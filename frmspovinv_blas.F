@@ -86,9 +86,9 @@ C     Hadamard square of R^t * R
 C     form S(P,Q)^(-1)
 C     svd
       info = 0
-      call dgesdd( 'A', ngrid, ngrid, v(js), ngrid,
-     &     v(jsv), v(ju), ngrid, v(jvt), ngrid, v(jend), lenv-jend,
-     &     v(jscr), info )
+      call dgesvd( 'A','A', ngrid, ngrid, v(js), ngrid,
+     &     v(jsv), v(ju), ngrid, v(jvt), ngrid, v(jend),
+     & lenv - jend, info )
 
       if ( info .ne. 0 ) then
          write (iout,1020) info
@@ -122,7 +122,7 @@ C     assemble back
 
       call linear (v(js),v(js), ngrid, ngrid)
 C     print summary
-      write (iout, 1100) v(jsv+nrank-1), v(jsv) / v(jsv+nrank-1)
+      write (iout, 1100) one / v(jsv+nrank-1), v(jsv+nrank-1) / v(jsv)
       write (iout, 1110) nrank
       
 C     save S^-1

@@ -63,6 +63,9 @@ C |  iop(78) - debugging of decomposition accuracy (N^4 cost)  |
 C |                0 - do not perform                          |
 C |               >0 - compare decomposed integrals to full    |
 C |              >10 - print summary to a CSV file             |      
+C |  iop(79) - requests to read external grid from grid.dat    |
+C |                0 - build grid normally                     |
+C |               >0 - read external grid                      |     
 C +------------------------------------------------------------+
 
 
