@@ -93,7 +93,7 @@ C     add beta contribution for open shell
       
       if (iopcl .eq. 0) then
          do 110 ii = 0, nmats - 1
-            call ascale(ntt, 2.0d0, pa(1+ii*ntt),pa(1+ii*ntt))
+            call ascale(ntt, 2.0d0, fa(1+ii*ntt),fa(1+ii*ntt))
  110     continue
       else
          do 120 ii = 0, nmats - 1
@@ -106,7 +106,10 @@ C     add beta contribution for open shell
  130        continue
          else
             do 140 ii = 0, nmats - 1
-               call aadd (ntt,fa(1+ii*ntt),fb(1+ii*ntt),fb(1+ii*ntt))
+            call ctrcou (iout, iprint, .false., 0, nbasis, ngrid, x,
+     &           z, pb(1+ii*ntt), fb(1+ii*ntt), v)
+            call ctrcou (iout, iprint, .false., 0, nbasis, ngrid, x,
+     &           z, pa(1+ii*ntt), fb(1+ii*ntt), v)
  140        continue
          endif
       endif

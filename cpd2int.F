@@ -44,6 +44,8 @@ C |            10 radial and 26 angular points (7th order grid)|
 C |                                                            |
 C |  iop(61) - selects the radial weights?                     |
 C |  iop(62) - selects the radial grid type?                   |     
+C |  iop(63) - selects the tolerance of the pseudoinversion    |
+C |                of spatial overlap. Default: 10 (10^-10)    |     
 C |                                                            |
 C |  iop(109)-  RI options:                                    |
 C |           0 ... Default (2).                               |
@@ -130,7 +132,7 @@ C     other variables
 
       integer     nbsq
       integer     ngrid, nbas6d
-      integer     nrank, itol   
+      integer     nrank, itol, ritol   
       integer     ii, junk
       real*8      accdes
 
@@ -191,9 +193,13 @@ C     debug Fock matrices
       
       integer     jrhoa, jrhob, jfa, jfb, jscr, ntt
       integer     nmat, nmats, nmatt
+      logical     initrand
       character   mtname*10
-      real*8      xx
-       
+      real*8      tr1a, tr1b, tr2a, tr2b, xx, time
+      
+C     functions for debug fock
+      real*8      scftrc, omp_get_wtime
+      
 C     .. prism variables ..
 
 #include "repall.inc"      
@@ -208,7 +214,8 @@ C     .. prism variables ..
       integer     ifmm, iseall
       integer     fmflag, fmflg1, nfxflg, ihmeth
       integer     itqry
-      
+
+      logical     keepp, initf, dopurp, dopurf, dospar
 C       .. PBC variables ..
 
       integer     npdir, jpbcsta, jpbcend
@@ -226,6 +233,7 @@ C     format statements
  1020 format (' accuracy = ',D8.3, ' pseudoinv. tolerance = ', D8.3)
  1021 format (' exact integrals will be used ')
  1022 format (' density fitted integrals will be used ')
+ 1023 format (' RI metric pseudoinv. tolerance = ', D8.3)
  1040 format (' integrals will be replicated using symmetry')
       write (iout, *) ' '
       write (iout, *) ' +-------------------------------------------+'
@@ -294,7 +302,10 @@ C     Decide on external grid
 C     Desired accuracy and pseudoinversion tolerance for spatial overlap
 
       accdes = decacc (0, 0.0d0, .false.)
-      itol = 10
+      itol  = mod(iop(63),100)
+      if (itol .le. 0) then
+         itol  = 10
+      endif
       write (iout, 1020) accdes, Gfloat(10)**(-itol)
       
 C     Use of symmetry
@@ -334,7 +345,16 @@ C     Use of RI (N^4 scaling algorithm) and related options
       else
          ri = .false.
       endif
-      
+
+C     RI inversion tolerance
+      if (ri) then
+         ritol = mod(iop(109), 10000) / 100
+         if (ritol .le. 0) then
+            ritol = 10
+         endif
+         write (iout, 1023) Gfloat(10)**(-ritol)
+      endif
+
 C     Metric to use with RI: 1 - 1/r, 2 - overlap      
       ir12 = mod (iop(109), 100000) / 10000
       if (ir12 .eq. 0) ir12 = 1
@@ -398,7 +418,7 @@ C-----------------------------------------------------------------------------+
          
       else
          call frmemtri(iout, iprint, nbasis, ngrid, jsym2e, neq, neqshl,
-     &        neqsh2, ir12, itol, accdes, ndbf6d, irwfac,
+     &        neqsh2, ir12, ritol, accdes, ndbf6d, irwfac,
      &        irwria, irwrib, irwe, v(jend), lenv - jend)
       endif
       
@@ -535,17 +555,21 @@ C---------------------------------------------------------------------------+
          dims(1) = nbasis
          dims(2) = nbasis
 
+         initrand = .true.
+         time = omp_get_wtime()
+         call srand(time)
+  
          do 1100 ii = 0, nmats - 1
-            call symmetric (iout, .true., nbasis, 0, v(jscr))
+            call symmetric (iout, .false., nbasis, 0, v(jscr))
             write(mtname, '(A,I3.3)') 'pas', ii 
-            call outoctfmt (iout, 'pa.mat', 1, mtname, 2, dims, v(jscr))
+            call outoctfmt (iout, 'pa.mat', 2, mtname, 2, dims, v(jscr))
             call linear (v(jscr), v(jrhoa + ii*ntt), nbasis, nbasis)
  1100    continue
          do 1200 ii = 0, nmatt - 1 
             call symmetric (iout, .false., nbasis, 0, v(jscr))
             write(mtname, '(A,I3.3)') 'pat', ii 
             call outoctfmt (iout, 'pa.mat', 2, mtname, 2, dims, v(jscr))
-            call linear (v(jscr), v(jrhoa+ntt*nmats+ii*nmatt), nbasis,
+            call linear (v(jscr), v(jrhoa+ntt*nmats+ii*ntt), nbasis,
      &    nbasis)
  1200    continue
          do 1300 ii = 0, nmat - nmats - nmatt - 1 
@@ -559,14 +583,14 @@ C---------------------------------------------------------------------------+
          do 1150 ii = 0, nmats - 1
             call symmetric (iout, .false., nbasis, 0, v(jscr))
             write(mtname, '(A,I3.3)') 'pbs', ii 
-            call outoctfmt (iout, 'pb.mat', 1, mtname, 2, dims, v(jscr))
+            call outoctfmt (iout, 'pb.mat', 2, mtname, 2, dims, v(jscr))
             call linear (v(jscr), v(jrhob + ii*ntt), nbasis, nbasis)
  1150    continue
          do 1250 ii = 0, nmatt - 1 
             call symmetric (iout, .false., nbasis, 0, v(jscr))
             write(mtname, '(A,I3.3)') 'pbt', ii             
             call outoctfmt (iout, 'pb.mat', 2, mtname, 2, dims, v(jscr))
-            call linear (v(jscr), v(jrhob+ntt*nmats+ii*nmatt), nbasis,
+            call linear (v(jscr), v(jrhob+ntt*nmats+ii*ntt), nbasis,
      &    nbasis)
  1250    continue
          do 1350 ii = 0, nmat - nmats - nmatt - 1 
@@ -621,11 +645,17 @@ C     Fill arrays with symmetry related quantities.
         if ( lenneqsh2 .ne. 0 ) then
            call fileio (2, -726, lenneqsh2, v(jneqsh2), 0)
         endif
+
+        keepp  = .true.
+        initf  = .true.
+        dopurp = .false.
+        dopurf = .false.
+        dospar = .false.
         
          call fofcou (iout,iprint,1,iopcl,0,1,nomega,
      $ omega,fmm,fmflag,fmflg1,nfxflg,ipflag,allowp,lseall,
      $ v(iseall),
-     $ 1,natoms,-1,-1,.false.,.false.,.false.,0,accdes,
+     $ 1,natoms,keepp,initf,dopurp,dopurf,dospar,0,accdes,
      $ (1.0d0,0.0d0),0,nmat,nmats,nmatt,nmat,0,0,nbasis,
      $ 0,1,1,v(jneq),v(jneqshl),v(jneqsh2),rotall,neqall,0,0,v(jrhoa),
      $ v(jrhob),junk,junk,junk,junk,junk,junk,junk,0,v(jfa),v(jfb),0,
@@ -633,9 +663,9 @@ C     Fill arrays with symmetry related quantities.
      $ v(jpbcsta),celvec,(0.0d0,0.0d0),(1.0d0,0.0d0),xx,0,0,xx,xx,junk,
      $ junk,xx,v(jend),v(jend),lenv-jend+1)
 
-         do 2100 ii = 0, nmats - 1
+      do 2100 ii = 0, nmats - 1
             write(mtname, '(A,I3.3)') 'fas', ii 
-            call outoctfmt(iout, 'fa.mat', 1, mtname, 1, ntt,
+            call outoctfmt(iout, 'fa.mat', 2, mtname, 1, ntt,
      &           v(jfa+ii*ntt))         
  2100    continue
          do 2200 ii = 0, nmatt - 1
@@ -651,7 +681,7 @@ C     Fill arrays with symmetry related quantities.
 
          do 2150 ii = 0, nmats - 1
             write(mtname, '(A,I3.3)') 'fbs', ii             
-            call outoctfmt(iout, 'fb.mat', 1, mtname, 1, ntt,
+            call outoctfmt(iout, 'fb.mat', 2, mtname, 1, ntt,
      &           v(jfb+ii*ntt))         
  2150    continue
          do 2250 ii = 0, nmatt - 1
@@ -665,6 +695,9 @@ C     Fill arrays with symmetry related quantities.
      &           v(jfb+(nmats+nmatt)*ntt+ii*ntt))         
  2350    continue
 
+         tr1a = scftrc(v(jrhoa), v(jfa), nbasis, nmat)
+         tr1b = scftrc(v(jrhob), v(jfb), nbasis, nmat)
+         
          call cpdfock (iout, iprint, iopcl, -1, nbasis, ngrid, 
      &    irwfac,
      &        irwz, nmat, nmats, nmatt, v(jrhoa), v(jrhob), v(jfa),
@@ -673,7 +706,7 @@ C     Fill arrays with symmetry related quantities.
 
          do 3100 ii = 0, nmats - 1
             write(mtname, '(A,I3.3)') 'facs', ii             
-            call outoctfmt(iout, 'fac.mat', 1, mtname, 1, ntt,
+            call outoctfmt(iout, 'fac.mat', 2, mtname, 1, ntt,
      &           v(jfa+ii*ntt))         
  3100    continue
          do 3200 ii = 0, nmatt - 1
@@ -689,7 +722,7 @@ C     Fill arrays with symmetry related quantities.
 
          do 3150 ii = 0, nmats - 1
             write(mtname, '(A,I3.3)') 'fbcs', ii 
-            call outoctfmt(iout, 'fbc.mat', 1, mtname, 1, ntt,
+            call outoctfmt(iout, 'fbc.mat', 2, mtname, 1, ntt,
      &           v(jfb+ii*ntt))         
  3150    continue
          do 3250 ii = 0, nmatt - 1
@@ -702,7 +735,17 @@ C     Fill arrays with symmetry related quantities.
             call outoctfmt(iout, 'fbc.mat', 2, mtname, 1, ntt,
      &           v(jfb+(nmats+nmatt)*ntt+ii*ntt))         
  3350    continue
-         
+
+         tr2a = scftrc(v(jrhoa), v(jfa), nbasis, nmat)
+         tr2b = scftrc(v(jrhob), v(jfb), nbasis, nmat)
+
+         write(iout, *)
+         write(iout, '(A,E20.12,A,E20.12,A,E20.12)')
+     &        ' full = ', tr1a, ' diff = ', (tr1a - tr2a), ' rel = ',
+     &        (tr1a - tr2a) / tr1a
+         write(iout, '(A,E20.12,A,E20.12,A,E20.12)')
+     &        ' full = ', tr1b, ' diff = ', (tr1b - tr2b), ' rel = ',
+     &        (tr1b - tr2b) / tr1b
       endif
       
       call chainx(0)

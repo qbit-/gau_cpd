@@ -10,7 +10,7 @@ INTELPATH = $(INTELROOT)/lib/intel64
 MKLPATH = $(MKLROOT)/lib/intel64
 MKLINCLUDE = -I$(MKLROOT)/include -I$(INTELROOT)/include
 PROFFLAG = #-Mprof=func
-FC0      = pgf77 -i8
+FC0      = pgf77 -i8 -r8 -mp
 #FC0 = pgf90 -Wl,-z,muldefs
 #FC2 = -Wl"-M /dev/null -D DUPENTRY=NOTE -D FORCE=OFF -f indef"
 
@@ -40,9 +40,9 @@ MAIN325 = ml325.o
 OBJ325  = aclearf.o atquadwrt.o cpd2int.o ctrmemest1.o ctrmemest_nd.o ctrmemest2.o frm2eints.o frm2eri.o frmemt.o frmemt_nd.o frmemtri.o frmquad.o frmria.o frmrib.o frmspovinv.o \
 	  frmz.o updmatf.o
 TEMPOBJ = asubf.o cpdfock.o cpdfkmem.o cpdexmem.o ctrcou.o ctrexc.o frmspovinv_blas.o normfro.o outcsv.o outoctfmt.o reconstr.o symmetric.o toeplitz.o \
-	  readfmt.o frmextquad.o
+	  readfmt.o frmextquad.o 
 
-OBJGAU =
+OBJGAU = 
 #numin3.o
 
 l325.exe: $(MAIN325) $(OBJ325) $(TEMPOBJ) $(OBJGAU)

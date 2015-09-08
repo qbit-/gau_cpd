@@ -37,6 +37,9 @@ C     quadrature related variables
       integer     ngridmx, ntheta, nphi, mxradu, mxangu, iprune
       integer     iopwrt, leniopwrt, lenscrwrt
 
+      logical    parok, pardig, readb, usebfn, usemo, useocc
+      logical    hvrmax
+      
       parameter  ( leniopwrt = 5 )
       dimension   iopwrt(leniopwrt)
 
@@ -83,10 +86,18 @@ C     here we just give maximal possible length - may need adjustment in future
       
       lenscrwrt  = nbas6d
 
-      call nin3su (iout,iprint,iopcl,.true.,.false.,npmax,.true.,
-     $  .true.,.false.,.false.,0,0,0,iradan,iranwt,irangd,
+      parok  = .true.
+      pardig = .false.
+      readb  = .true.
+      usebfn = .true.
+      usemo  = .false.
+      useocc = .false.
+      hvrmax = .false.
+      
+      call nin3su (iout,iprint,iopcl,parok,pardig,npmax,readb,
+     $  usebfn,usemo,useocc,0,0,0,iradan,iranwt,irangd,
      $  2,0,natoms,nbas6d,IAn,iattyp,atmchg,c,xx,xx,xx,
-     $  xx,xx,.false.,xx,atquadwrt,iopwrt,xx,lenscrwrt,MOFunX,junk,xx,
+     $  xx,xx,hvrmax,xx,atquadwrt,iopwrt,xx,lenscrwrt,MOFunX,junk,xx,
      $  0,DenFnX,junk,xx,0,v(jend),lenv - jend)
 
 C     Read back the output from the writing routine

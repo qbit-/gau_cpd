@@ -20,7 +20,7 @@ C     Arguments:
 
 C     functions
       external    srand
-      real        rand
+      real*8      rand
 
 C     Other
       integer     ii,jj      
