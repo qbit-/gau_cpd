@@ -21,7 +21,6 @@ C     additional variables
 
       integer    irwfac
       integer    mu, mu1, ig
-      integer    blksz, nblk, ib 
 
 C     Read/write the input/output array
       

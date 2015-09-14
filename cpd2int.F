@@ -36,6 +36,9 @@ C |     = 0, [default] print basic information                 |
 C |         from Quad and PRISM                                |
 C |     = 10, print two-electron integrals                     |
 C |                                                            |
+C |  iop(59) - integrals decomposition type                    |
+C |       = 1 decompose AOs  (default)                         |
+C |       = 2 decompose MOs                                    |
 C |  iop(60) - number of radial and angular points in          |
 C |            spatial quadrature:                             |
 C |            IIIJJJ .. III radial points, JJJ angular points |
@@ -123,6 +126,9 @@ C     general option variables
       parameter   ( iradandef = 8012, iranwtdef = -1, irangddef = 0 )
 
       logical     extgrid
+
+      integer     dectype
+      logical     dotran
       
 C     memory allocation variables
 
@@ -136,6 +142,16 @@ C     other variables
       integer     ii, junk
       real*8      accdes
 
+C     transformation related variables
+
+      integer     jxa, jxb, jscrx, jscrmap
+      integer     lenx, kk
+      integer     iopclx, methlc
+      logical     units
+      
+      integer     nspblk, nri
+      logical     cbfn, spinor
+      
 C     CPD2E RWF files
 
       integer     irwfac, irwspo, irwz, irwe
@@ -266,6 +282,16 @@ C     Set printing level.
 
       if ( iprint .lt. 0 .or. iprint .gt. 10 ) iprint = 0
       write (iout, 1010) iprint
+
+C     Set up job type
+
+      if (iop(59) .le. 0) then
+         dectype = 1    ! AOs
+      elseif (iop(59) .gt. 2 ) then
+         call gauerr ('Incorrect decomposition type in cpd2e')
+      else
+         dectype = iop(59)
+      endif
       
 C     Set up grid options 
 C     Read grid parameters from ilsw, but substitute 
@@ -386,8 +412,70 @@ C     Get 6d basis used with all quadratures
 
       call getnb6(nbas6d)
       if (nbasis .ne. nbas6d)
-     &  call gauerr ('Spherical bases are not supported yet')
+     &  call gauerr ('cpd2int: Spherical bases are not supported yet')
       write (iout, *)
+
+C-----------------------------------------------------------------------------+
+C     Prepare transformation used with the quadrature                         |
+C-----------------------------------------------------------------------------+
+
+      if (dectype .eq. 1) then
+         dotran = .false.
+      elseif (dectype .eq. 2) then
+         dotran = .true.
+      endif
+
+      if (dotran) then
+         call decosc(iopcl,nspblk,nri,junk,cbfn,junk,spinor)
+
+         if (cbfn) then
+            call gauerr('cpd2int: Complex bases are not supported yet')
+         endif
+
+         lenx = itqry(irwx)
+         if (lenx .ne. nbasis*nbsuse) then
+            write (iout, '(A,I4,A,I4)') ' lenx expected = ',
+     &           nbasis*nbsuse, ' but got = ', lenx
+            write (iout, '(A,A)') ' Make sure you run l325 before l401',
+     &       'aborting ...'
+            call gauerr ('cpd2int: localization')
+         endif
+
+         jxa     = jend
+         jxb     = jxa + nbasis*nbasis
+         jscrmap = jxa + nbasis*nbasis
+         jend    = jscrmap + nbasis 
+         
+         call tstcor(jend ,lenv,'cpd2int: localization')
+
+         call fileio (2, -irwx, lenx, v(jxa), 0)
+         call outoctfmt(iout, 't.mat', 1, 't', 1, lenx, v(jxa))
+
+         lenx = itqry(irws)
+         if (lenx .gt. 0) call fileio (2, -irws, lenx, v(jend), 0)
+         call outoctfmt(iout, 'sb.mat', 1, 'sb', 1, lenx, v(jend))
+
+         lenx = itqry(irwca)
+         if (lenx .gt. 0) call fileio (2, -irwca, lenx, v(jend), 0)
+         call outoctfmt(iout, 'ca.mat', 1, 'ca', 1, lenx, v(jend))
+
+         lenx = itqry(irwcb)
+         if (lenx .gt. 0) call fileio (2, -irwcb, lenx, v(jend), 0)
+         call outoctfmt(iout, 'cb.mat', 1, 'cb', 1, lenx, v(jend))
+
+C     Modify iopcl as localize does not like complex
+
+         iopclx = 0
+         units  = .false.
+         methlc = 2
+
+        call localize(iout,5,iopclx,methlc,units,natoms,
+     &        nbsuse,nbasis,v(jxa),xx,v(jscrmap),v(jend),lenv-jend)
+        dims(1) = nbasis
+        dims(2) = nbsuse
+        call outoctfmt(iout, 'j.mat', 1, 'j', 2, dims, v(jend))
+         
+      endif
       
 C-----------------------------------------------------------------------------+
 C     Compute the collocation matrix X(mu,G) and save it to the RWF irwfac    |
@@ -398,8 +486,10 @@ C-----------------------------------------------------------------------------+
      &        nbas6d, ngrid, irwfac, v(jend), lenv - jend)
       else
          call frmquad (iout, iprint, iradan, iranwt, irangd, iopcl,
-     &        ngrid, irwfac, v(jend), lenv - jend)
+     &        dotran, nbsuse, v(jxa), ngrid, irwfac, v(jend),
+     &        lenv - jend)
       endif
+
 C-----------------------------------------------------------------------------+      
 C     Compute spatial overlap using collocation from irwfac                   |
 C-----------------------------------------------------------------------------+      
@@ -535,14 +625,14 @@ C---------------------------------------------------------------------------+
 C     testing Fock matrices                                                 |
 C---------------------------------------------------------------------------+      
       
-      dbgprint = .true.
+      dbgprint = .false.
       if (dbgprint) then
          ntt   = nbasis*(nbasis+1)/2
          nbsq  = nbasis*nbasis
 
-         nmat  = 1
-         nmats = 1
-         nmatt = 0
+         nmat  = 6
+         nmats = 2
+         nmatt = 2
          iopcl = 1
 
          jscr  = jend
