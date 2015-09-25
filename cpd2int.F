@@ -423,59 +423,51 @@ C-----------------------------------------------------------------------------+
          dotran = .false.
       elseif (dectype .eq. 2) then
          dotran = .true.
+      elseif (dectype .eq. 3) then
+         dotran = .false.
       endif
-
-      if (dotran) then
-         call decosc(iopcl,nspblk,nri,junk,cbfn,junk,spinor)
-
-         if (cbfn) then
-            call gauerr('cpd2int: Complex bases are not supported yet')
-         endif
-
-         lenx = itqry(irwx)
-         if (lenx .ne. nbasis*nbsuse) then
-            write (iout, '(A,I4,A,I4)') ' lenx expected = ',
-     &           nbasis*nbsuse, ' but got = ', lenx
-            write (iout, '(A,A)') ' Make sure you run l325 before l401',
-     &       'aborting ...'
-            call gauerr ('cpd2int: localization')
-         endif
-
-         jxa     = jend
-         jxb     = jxa + nbasis*nbasis
-         jscrmap = jxa + nbasis*nbasis
-         jend    = jscrmap + nbasis 
-         
-         call tstcor(jend ,lenv,'cpd2int: localization')
-
-         call fileio (2, -irwx, lenx, v(jxa), 0)
-         call outoctfmt(iout, 't.mat', 1, 't', 1, lenx, v(jxa))
-
-         lenx = itqry(irws)
-         if (lenx .gt. 0) call fileio (2, -irws, lenx, v(jend), 0)
-         call outoctfmt(iout, 'sb.mat', 1, 'sb', 1, lenx, v(jend))
-
-         lenx = itqry(irwca)
-         if (lenx .gt. 0) call fileio (2, -irwca, lenx, v(jend), 0)
-         call outoctfmt(iout, 'ca.mat', 1, 'ca', 1, lenx, v(jend))
-
-         lenx = itqry(irwcb)
-         if (lenx .gt. 0) call fileio (2, -irwcb, lenx, v(jend), 0)
-         call outoctfmt(iout, 'cb.mat', 1, 'cb', 1, lenx, v(jend))
-
-C     Modify iopcl as localize does not like complex
-
-         iopclx = 0
-         units  = .false.
-         methlc = 2
-
-        call localize(iout,5,iopclx,methlc,units,natoms,
-     &        nbsuse,nbasis,v(jxa),xx,v(jscrmap),v(jend),lenv-jend)
-        dims(1) = nbasis
-        dims(2) = nbsuse
-        call outoctfmt(iout, 'j.mat', 1, 'j', 2, dims, v(jend))
-         
-      endif
+      
+c$$$      if (dotran) then
+c$$$         call decosc(iopcl,nspblk,nri,junk,cbfn,junk,spinor)
+c$$$
+c$$$         if (cbfn) then
+c$$$            call gauerr('cpd2int: Complex bases are not supported yet')
+c$$$         endif
+c$$$
+c$$$         lenx = itqry(irwx)
+c$$$         if (lenx .ne. nbasis*nbsuse) then
+c$$$            write (iout, '(A,I4,A,I4)') ' lenx expected = ',
+c$$$     &           nbasis*nbsuse, ' but got = ', lenx
+c$$$            write (iout, '(A,A)') ' Make sure to run l325 before l401',
+c$$$     &       ' aborting ...'
+c$$$!            call gauerr ('cpd2int: localization')
+c$$$         endif
+c$$$
+c$$$         jxa     = jend
+c$$$         jxb     = jxa + nbasis*nbasis + lenx
+c$$$         jscrmap = jxa + nbasis*nbasis
+c$$$         jend    = jscrmap + nbasis 
+c$$$         
+c$$$         call tstcor(jend ,lenv,'cpd2int: localization')
+c$$$
+c$$$         call fileio (2, -irwx, lenx, v(jxa), 0)
+c$$$         dims(1) = nbasis
+c$$$         dims(2) = nbsuse
+c$$$         call outoctfmt(iout, 't.mat', 1, 't', 2, dims, v(jxa))
+c$$$
+c$$$C     Modify iopcl as localize does not like complex
+c$$$
+c$$$         iopclx = 0
+c$$$         units  = .false.
+c$$$         methlc = 2
+c$$$
+c$$$        call localize(iout,5,iopclx,methlc,units,natoms,
+c$$$     &        nbsuse,nbasis,v(jxa),xx,v(jscrmap),v(jend),lenv-jend)
+c$$$        dims(1) = nbasis
+c$$$        dims(2) = nbsuse
+c$$$        call outoctfmt(iout, 'j.mat', 1, 'j', 2, dims, v(jend))
+c$$$         
+c$$$      endif
       
 C-----------------------------------------------------------------------------+
 C     Compute the collocation matrix X(mu,G) and save it to the RWF irwfac    |
@@ -543,7 +535,11 @@ C----------------------------------------------------------------------------+
      &        'cpd2int: debug print')
          
          call fileio(2,-irwfac,nbasis*ngrid,v(jend),0)
-         dims(1) = nbasis
+         if (.not.dotran) then
+            dims(1) = nbasis
+         else
+            dims(1) = nbsuse
+         endif
          dims(2) = ngrid
          call outoctfmt(iout, 'x.mat', 1, 'x', 2, dims, v(jend))
 
@@ -602,6 +598,7 @@ c$$$         call outoctfmt(iout, 'ints.mat', 1, 'ints', 4, dims, v(jend))
      &    - jend)
 
          write (iout, '(A,I20)')    ' nbasis = ', nbasis
+         write (iout, '(A,I20)')    ' nbsuse = ', nbsuse
          write (iout, '(A,I20)')    ' ngrid  = ', ngrid
          write (iout, '(A,I20)')    ' rank   = ', nrank
          if (ri) write (iout, '(A,I20)') ' ndbf = ', ndbf6d

@@ -53,7 +53,7 @@ C     functions
          write (fhandle,'(E20.14,$)') m(ii)
          write (fhandle,'(A,$)') ','
  100  continue
-      write (fhandle,'E20.14') m(nelem)
+      write (fhandle,'(E20.14)') m(nelem)
       
       close (fhandle)
       return
