@@ -26,7 +26,8 @@ C     Read/write the input/output array
       
       irwfac    = intvec(1) 
       intvec(2) = intvec(2) + ngrid
-
+      intvec(5 + iatom) = intvec(5 + iatom) + ngrid
+      
       if (iprint .gt. 5) then
          call prtchi(iout,0,ngrid,nbas6d,chi,d1chi,d2chi,d3chi)
          call outmts(iout,'weights:',0,0,weight,ngrid,1,ngrid,1)

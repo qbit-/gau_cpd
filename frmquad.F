@@ -20,7 +20,7 @@ C     [in]  iopcl   - usual WF selection parameter
 C     [in]  dotran  - use full or transformed basis (MOs, localized AOs etc)
 C     [in]  numtr   - number of columns in the transformation matrix 
 C     [in]  tran    - transformation matrix
-C     [out] ngridu  - size of the grid
+C     [out] ngridu  - size of the grid      
 C     [out] irwfac  - RWF for storing X (initialized here)
 C     
 C-----------------------------------------------------------------------------+
@@ -41,16 +41,17 @@ C     quadrature related variables
       integer     nbas6d, iopclx
       integer     ngridmx, ntheta, nphi, mxradu, mxangu, iprune
       integer     iopwrt, leniopwrt, lenscrwrt
-
+      
       logical    parok, pardig, readb, usebfn, usemo, useocc
       logical    hvrmax
       
-      parameter  ( leniopwrt = 5 )
-      dimension   iopwrt(leniopwrt)
-
+C      parameter  ( leniopwrt = 5 + natoms)
+C      dimension   iopwrt(leniopwrt)
+      dimension   iopwrt(natoms + 5)
+      
 C     pointers
 
-      integer     jend, junk
+      integer     jend, ii, junk
       real*8      xx
       parameter   ( junk = 0, xx = 0.0d0 )
       
@@ -86,6 +87,7 @@ C     Prepare the arguments passed/received from the writing routine
 C     iopwrt integer array:
 C        1 - RWF to store X(mu,G)
 C        2 - total number of grid points (incremented by working routine)
+C        6..natoms - number of grid points for each atom
       
       iopwrt(1) = irwfac
       iopwrt(2) = 0
@@ -119,5 +121,10 @@ C     actual total number of grid points:
 
       ngridu = iopwrt(2)      
       write (iout, *) 'Frmquad: nin3su completed, npoints = ', ngridu
+      if (iprint .gt. 0) then
+         write (iout, *) 'Frmquad: npoints for active atoms:'
+         write (iout, '(A,I4,A,I4)') (' Atom: ', IAn(ii),
+     $    ' Ngrid: ', iopwrt(5+ii), ii=1,natoms)  
+      endif
 
       end

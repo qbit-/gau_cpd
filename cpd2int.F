@@ -541,19 +541,19 @@ C----------------------------------------------------------------------------+
             dims(1) = nbsuse
          endif
          dims(2) = ngrid
-         call outoctfmt(iout, 'x.mat', 1, 'x', 2, dims, v(jend))
+         call outoctfmt(iout, 'x.mat', 1, 1,'x', 2, dims, v(jend))
 
          call fileio(2,-irwspo,ngrid*(ngrid+1)/2,v(jend),0)
          call square (v(jend), v(jend), ngrid, ngrid, 0)
          dims(1) = ngrid
          dims(2) = ngrid
-         call outoctfmt(iout, 's.mat', 1, 's', 2, dims, v(jend))
+         call outoctfmt(iout, 's.mat', 1, 1,'s', 2, dims, v(jend))
          
          call fileio(2,-irwe,ngrid*ngrid,v(jend),0)
-         call outoctfmt(iout, 'e.mat', 1, 'e', 2, dims, v(jend))
+         call outoctfmt(iout, 'e.mat', 1, 1,'e', 2, dims, v(jend))
          
          call fileio(2,-irwz,ngrid*ngrid,v(jend),0)
-         call outoctfmt(iout, 'z.mat', 1, 'z', 2, dims, v(jend))         
+         call outoctfmt(iout, 'z.mat', 1, 1,'z', 2, dims, v(jend))         
 
          call tstcor (nbasis**4, lenv - jend, 'cpd2int: testing')
 
@@ -566,7 +566,7 @@ C----------------------------------------------------------------------------+
          dims(2) = nbasis
          dims(3) = nbasis
          dims(4) = nbasis
-         call outoctfmt(iout, 'ints.mat', 1, 'ints', 4, dims, v(jend))         
+         call outoctfmt(iout, 'ints.mat', 1, 1,'ints', 4, dims, v(jend))         
       endif
 
 C----------------------------------------------------------------------------+
@@ -584,7 +584,7 @@ c$$$         dims(1) = nbasis
 c$$$         dims(2) = nbasis
 c$$$         dims(3) = nbasis
 c$$$         dims(4) = nbasis
-c$$$         call outoctfmt(iout, 'ints.mat', 1, 'ints', 4, dims, v(jend))         
+c$$$         call outoctfmt(iout, 'ints.mat', 1, 1,'ints', 4, dims, v(jend))         
          
          froful=normfro(iout, iprint, nbasis, irw2efull, v(jend), lenv
      &    - jend)
@@ -649,20 +649,23 @@ C---------------------------------------------------------------------------+
          do 1100 ii = 0, nmats - 1
             call symmetric (iout, .false., nbasis, 0, v(jscr))
             write(mtname, '(A,I3.3)') 'pas', ii 
-            call outoctfmt (iout, 'pa.mat', 2, mtname, 2, dims, v(jscr))
+            call outoctfmt (iout, 'pa.mat', 2, 1, mtname, 2, dims,
+     &           v(jscr))
             call linear (v(jscr), v(jrhoa + ii*ntt), nbasis, nbasis)
  1100    continue
          do 1200 ii = 0, nmatt - 1 
             call symmetric (iout, .false., nbasis, 0, v(jscr))
             write(mtname, '(A,I3.3)') 'pat', ii 
-            call outoctfmt (iout, 'pa.mat', 2, mtname, 2, dims, v(jscr))
+            call outoctfmt (iout, 'pa.mat', 2, 1, mtname, 2, dims,
+     &           v(jscr))
             call linear (v(jscr), v(jrhoa+ntt*nmats+ii*ntt), nbasis,
      &    nbasis)
  1200    continue
          do 1300 ii = 0, nmat - nmats - nmatt - 1 
             call symmetric (iout, .false., nbasis, 1, v(jscr))
             write(mtname, '(A,I3.3)') 'paa', ii             
-            call outoctfmt (iout, 'pa.mat', 2, mtname, 2, dims, v(jscr))
+            call outoctfmt (iout, 'pa.mat', 2, 1, mtname, 2, dims,
+     &           v(jscr))
             call linear (v(jscr), v(jrhoa+(nmats+nmatt)*ntt+ii*ntt),
      &           nbasis, nbasis)
  1300    continue
@@ -670,20 +673,23 @@ C---------------------------------------------------------------------------+
          do 1150 ii = 0, nmats - 1
             call symmetric (iout, .false., nbasis, 0, v(jscr))
             write(mtname, '(A,I3.3)') 'pbs', ii 
-            call outoctfmt (iout, 'pb.mat', 2, mtname, 2, dims, v(jscr))
+            call outoctfmt (iout, 'pb.mat', 2, 1, mtname, 2, dims,
+     &           v(jscr))
             call linear (v(jscr), v(jrhob + ii*ntt), nbasis, nbasis)
  1150    continue
          do 1250 ii = 0, nmatt - 1 
             call symmetric (iout, .false., nbasis, 0, v(jscr))
             write(mtname, '(A,I3.3)') 'pbt', ii             
-            call outoctfmt (iout, 'pb.mat', 2, mtname, 2, dims, v(jscr))
+            call outoctfmt (iout, 'pb.mat', 2, 1, mtname, 2, dims,
+     &           v(jscr))
             call linear (v(jscr), v(jrhob+ntt*nmats+ii*ntt), nbasis,
      &    nbasis)
  1250    continue
          do 1350 ii = 0, nmat - nmats - nmatt - 1 
             call symmetric (iout, .false., nbasis, 1, v(jscr))
             write(mtname, '(A,I3.3)') 'pba', ii             
-            call outoctfmt (iout, 'pb.mat', 2, mtname, 2, dims, v(jscr))
+            call outoctfmt (iout, 'pb.mat', 2, 1, mtname, 2, dims,
+     &           v(jscr))
             call linear (v(jscr), v(jrhob+(nmats+nmatt)*ntt+ii*ntt),
      &           nbasis, nbasis)
  1350    continue
@@ -752,33 +758,33 @@ C     Fill arrays with symmetry related quantities.
 
       do 2100 ii = 0, nmats - 1
             write(mtname, '(A,I3.3)') 'fas', ii 
-            call outoctfmt(iout, 'fa.mat', 2, mtname, 1, ntt,
+            call outoctfmt(iout, 'fa.mat', 2, 1, mtname, 1, ntt,
      &           v(jfa+ii*ntt))         
  2100    continue
          do 2200 ii = 0, nmatt - 1
             write(mtname, '(A,I3.3)') 'fat', ii 
-            call outoctfmt(iout, 'fa.mat', 2, mtname, 1, ntt,
+            call outoctfmt(iout, 'fa.mat', 2, 1, mtname, 1, ntt,
      &           v(jfa+nmats*ntt+ii*ntt))         
  2200    continue
          do 2300 ii = 0, nmat - nmats - nmatt - 1
             write(mtname, '(A,I3.3)') 'faa', ii 
-            call outoctfmt(iout, 'fa.mat', 2, mtname, 1, ntt,
+            call outoctfmt(iout, 'fa.mat', 2, 1, mtname, 1, ntt,
      &           v(jfa+(nmats+nmatt)*ntt+ii*ntt))         
  2300    continue
 
          do 2150 ii = 0, nmats - 1
             write(mtname, '(A,I3.3)') 'fbs', ii             
-            call outoctfmt(iout, 'fb.mat', 2, mtname, 1, ntt,
+            call outoctfmt(iout, 'fb.mat', 2, 1, mtname, 1, ntt,
      &           v(jfb+ii*ntt))         
  2150    continue
          do 2250 ii = 0, nmatt - 1
             write(mtname, '(A,I3.3)') 'fbt', ii             
-            call outoctfmt(iout, 'fb.mat', 2, mtname, 1, ntt,
+            call outoctfmt(iout, 'fb.mat', 2, 1, mtname, 1, ntt,
      &           v(jfb+nmats*ntt+ii*ntt))         
  2250    continue
          do 2350 ii = 0, nmat - nmats - nmatt - 1
             write(mtname, '(A,I3.3)') 'fba', ii             
-            call outoctfmt(iout, 'fb.mat', 2, mtname, 1, ntt,
+            call outoctfmt(iout, 'fb.mat', 2, 1, mtname, 1, ntt,
      &           v(jfb+(nmats+nmatt)*ntt+ii*ntt))         
  2350    continue
 
@@ -793,33 +799,33 @@ C     Fill arrays with symmetry related quantities.
 
          do 3100 ii = 0, nmats - 1
             write(mtname, '(A,I3.3)') 'facs', ii             
-            call outoctfmt(iout, 'fac.mat', 2, mtname, 1, ntt,
+            call outoctfmt(iout, 'fac.mat', 2, 1, mtname, 1, ntt,
      &           v(jfa+ii*ntt))         
  3100    continue
          do 3200 ii = 0, nmatt - 1
             write(mtname, '(A,I3.3)') 'fact', ii             
-            call outoctfmt(iout, 'fac.mat', 2, mtname, 1, ntt,
+            call outoctfmt(iout, 'fac.mat', 2, 1, mtname, 1, ntt,
      &   v(jfa+nmats*ntt+ii*ntt))         
  3200    continue
          do 3300 ii = 0, nmat - nmats - nmatt - 1
             write(mtname, '(A,I3.3)') 'faca', ii 
-            call outoctfmt(iout, 'fac.mat', 2, mtname, 1, ntt,
+            call outoctfmt(iout, 'fac.mat', 2, 1, mtname, 1, ntt,
      &           v(jfa+(nmats+nmatt)*ntt+ii*ntt))         
  3300    continue
 
          do 3150 ii = 0, nmats - 1
             write(mtname, '(A,I3.3)') 'fbcs', ii 
-            call outoctfmt(iout, 'fbc.mat', 2, mtname, 1, ntt,
+            call outoctfmt(iout, 'fbc.mat', 2, 1, mtname, 1, ntt,
      &           v(jfb+ii*ntt))         
  3150    continue
          do 3250 ii = 0, nmatt - 1
             write(mtname, '(A,I3.3)') 'fbct', ii             
-            call outoctfmt(iout, 'fbc.mat', 2, mtname, 1, ntt,
+            call outoctfmt(iout, 'fbc.mat', 2, 1, mtname, 1, ntt,
      &   v(jfb+nmats*ntt+ii*ntt))         
  3250    continue
          do 3350 ii = 0, nmat - nmats - nmatt - 1
             write(mtname, '(A,I3.3)') 'fbca', ii 
-            call outoctfmt(iout, 'fbc.mat', 2, mtname, 1, ntt,
+            call outoctfmt(iout, 'fbc.mat', 2, 1, mtname, 1, ntt,
      &           v(jfb+(nmats+nmatt)*ntt+ii*ntt))         
  3350    continue
 

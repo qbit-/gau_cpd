@@ -88,7 +88,7 @@ C     Allocate the B file and save integrals if requested
          Dims(1) = nbas6d
          Dims(2) = nbas6d
          Dims(3) = ndbf
-         call outoctfmt (iout, 'intsri.mat', 1, 'intsri', 3, dims,
+         call outoctfmt (iout, 'intsri.mat', 1, 1,'intsri', 3, dims,
      $    v(jBAO))
       endif
       
