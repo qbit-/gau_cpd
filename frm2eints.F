@@ -61,25 +61,21 @@ C     prism variables
 
 C     other
 
-      integer     jend, j2eint, jscr, junk, jj
+      integer     jend, j2eint, jscr
       integer     len2eint
       integer     ls, ntt, ntt2, nbsq  
 
-      character*20 chap
-      real*8      xx
-      complex*16  cxx
 
 C     functions called
 
       integer     intowp, itqry, igetrw
 
 C     constants
-
-      real*8 two, half
-      complex*16  cone
-      parameter ( two = 2.0d0, half = 0.5d0 )
-      parameter ( cone = (1.0d0, 0.0d0) )
-      parameter ( jj = 0, xx = 0.0d0 )
+      integer     junk, jj
+      real*8      one, two, half
+      real*8      xx
+      data        junk/0/, jj/0/, xx/0.0d0/, one/1.0d0/, half/0.5d0/
+      data        two/2.0d0/
       
 C     debug
       
@@ -204,13 +200,13 @@ C     no idea what it is (set according l906)
             
       call fofcou(iout,iprtf,ihmeth,iopcl,icntrl,iraf,nomega,
      &  omega,fmm,fmflag,fmflg1,nfxflg,ipflag,allowp,lseall,xx,
-     &  0,0,.false.,.false.,.false.,.false.,.false.,i1cent,accdes,
-     &  cone,0,1,1,0,1,0,0,nbasis,
+     &  0,0,.false.,.false.,.true.,.true.,.false.,i1cent,accdes,
+     &  one,0,1,1,0,1,0,0,nbasis,
      &  jsym2e,nopuse,nop1,v(ineq),v(ineqsh),v(ineqs2),rotall,neqall,
      &  nbti,junk,xx,
      &  xx,xx,xx,xx,xx,xx,xx,xx,junk,xx,xx,junk,
      &  xx,xx,natoms,ian,atmchg,c,iattyp,iatfrg,xx,xx,v(jpbcsta),
-     &  celvec,cxx,cone,v(j2eint),0,0,xx,xx,junk,
+     &  celvec,xx,one,v(j2eint),0,0,xx,xx,junk,
      &  junk,xx,v(jend),v(jend),lenv-jend+1)
 
 C     Unfold integrals in a square order

@@ -53,7 +53,7 @@ C     pointers
 
       integer     jend, ii, junk
       real*8      xx
-      parameter   ( junk = 0, xx = 0.0d0 )
+      data        junk/0/, xx/0.0d0/
       
       integer     npmax
 

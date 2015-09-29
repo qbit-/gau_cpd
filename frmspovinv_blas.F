@@ -21,7 +21,7 @@ C     [out] irwspo - RWF with S^-1
       dimension  v(*)
 
       real*8     one, zero
-      parameter  ( one = 1.0d0, zero = 0.0d0)
+      data       one/1.0d0/,zero/0.0d0/
       
 C     other variables
       integer    jend, jx, js, jsv, ju, jvt, jscr, ii

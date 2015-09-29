@@ -42,7 +42,7 @@ C     Allocate memory.
       Call TstCor(jEnd,MDV,'frmrib')
 
       if ( keep ) then
-         next = NDBF6D*NBSq6D
+         next = NDBF*NBSq6D
       endif
       
       jV = jXTmp
