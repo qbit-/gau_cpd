@@ -32,7 +32,7 @@ C     quadrature related variables
       
 C     pointers
 
-      integer     jend, jxbuf, junk
+      integer     jend, jxbuf, jscr, junk
       integer     nxblk
       real*8      xx
       data        junk/0/, xx/0.0d0/
@@ -54,8 +54,9 @@ C     Get basis information. Load /B/
 C     memory allocation
 
       jxbuf = jend
-      jend  = jxbuf + nbas6d*ngrid
-
+      jscr  = jxbuf + nbas6d*ngrid
+      jend  = jscr  + nbas6d
+      
       call tstcor (jend-1, lenv, 'convquad')
       call fileio (2, -irwfac,nbas6d*ngrid, v(jxbuf),0)
 
@@ -64,6 +65,16 @@ C     memory allocation
      &        ngrid,NShell,ShellT,ShellC,v(jxbuf))
       endif
       
+      if (donorm .and. dopure) then
+            call genaos(I5DB1, I7FB1, NShell, ShellT, ShellC, junk, AOS)
+            call redoc1(iout, iprint, .false., 1,1, I5DB1,I7FB1, nbas6d,
+     &           nbasis, nbas6d, ngrid, NShell, ShellT, ShellC,
+     &           v(jxbuf),v(jscr))
+            call pcck(0, junk, v(jxbuf), nbas6d, ngrid,
+     &           nbasis, ngrid)
+
+      endif
+
       call fileio (1, -irwfac,nbas6d*ngrid, v(jxbuf),0)
            
       end

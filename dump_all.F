@@ -108,7 +108,8 @@ C     general option variables
       parameter   ( iradandef = 8012, iranwtdef = -1, irangddef = 0 )
 
       logical     extgrid
-
+      logical     dopure
+      
       integer     idump, idumpdef, idp
       logical     outquad, outaox, outmos, outint, outintdf
 
@@ -354,8 +355,8 @@ C     Read /mol/
 C     Get 6d basis used with all quadratures
 
       call getnb6(nbas6d)
-      if (nbasis .ne. nbas6d)
-     &  call gauerr ('cpd2int: Spherical bases are not supported yet')
+C      if (nbasis .ne. nbas6d)
+C     &  call gauerr ('cpd2int: Spherical bases are not supported yet')
       write (iout, *)
 
 
@@ -397,22 +398,18 @@ C-----------------------------------------------------------------------------+
      &        lenv - jend)
       endif
 
+      if (nbasis .ne. nbas6d) then
+         dopure = .true.
+      endif
+      
       call convquad (iout, iprint, .true.,
-     &     .false., .false., ngrid, irwfac, v, lenv)
+     &     dopure, .false., ngrid, irwfac, v, lenv)
 
 C     Dump quadrature
 
       if (outquad) then
-         call tstcor(nbas6d*ngrid + nbas6d,lenv,'dump_all: quadrature')      
+         call tstcor(nbas6d*ngrid,lenv,'dump_all: quadrature')      
          call fileio (2, -irwfac, nbas6d*ngrid, v(jend), 0)
-c$$$         if (nbas6d .ne. nbasis) then
-c$$$            call genaos(I5DB1, I7FB1, NShell, ShellT, ShellC, junk, AOS)
-c$$$            call redoc1(iout, iprint, .false., 1,1, I5DB1,I7FB1, nbas6d,
-c$$$     &           nbasis, nbas6d, ngrid, NShell, ShellT, ShellC,
-c$$$     &           v(jend),v(jend + nbas6d*ngrid))
-c$$$            call pcck(0, junk, v(jend), nbas6d, ngrid,
-c$$$     &           nbasis, ngrid)
-c$$$         endif
          
          dims(1) = nbasis
          dims(2) = ngrid
