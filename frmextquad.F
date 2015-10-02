@@ -12,7 +12,7 @@ C     [in]  nbas6d    - number of basis functions (Cartesian)
 C     [out] irwfac    - file unit to output the quadrature
 C     [out] ngrid     - number of grid points found in file
 
-#include "commonb2.inc"
+#include "commonb.inc"
       
 C     Arguments:
       integer    iout, iprint, lenv
@@ -33,7 +33,7 @@ C     this is a PSI4 Bohr to Angstrom constant
       parameter   ( psi4bohr2A = 0.52917720859d0 )
 
 C     Load /B2/ with the density basis.
-      Call RdWrB(-10,0)
+      Call RdWrB(2,0)
       
       jend = 1
       call readfmt(iout, 'grid.dat', '(4E25.16)', 4, nval,

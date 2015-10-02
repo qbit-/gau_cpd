@@ -1,5 +1,5 @@
       subroutine ctrmemest2(iout, iprint, nbasis, ngrid, ndbf,
-     &     keepov, keepints, numkl, nump, numq, lenwbuf, lenfbuf,
+     &     keepov, keepints, keepx, numkl, nump, numq, lenwbuf, lenfbuf,
      &     lenxbufp, lenxbufq, lenscr, lenebuf, v, lenv) 
 
       implicit none 
@@ -13,6 +13,7 @@ C     [in] ngrid  - number of grid points in the quadrature
 C     [in] ndbf   - number of DBF functions if RI is used
 C     [out] keepov   - if we keep an overlap for RI in memory 
 C     [out] keepints - if fully in-core operation is possible
+C     [out] keepx    - if we keep quadrature in memory
 C     [out] numkl - step size over the KL index of integrals or DBF index of RI integrals. Here we allocate to iterate over whole counts of L only
 C     [out] nump  - step size over the right quadrature grid index
 C     [out] numq  - step size over the left quadrature grid index
@@ -33,7 +34,7 @@ C     Arguments
       integer    numkl, nump, numq
 
       integer    lenwbuf, lenfbuf, lenxbufp, lenxbufq, lenebuf, lenscr
-      logical    keepov, keepints
+      logical    keepov, keepints, keepx
 
 C     Other
 
@@ -52,9 +53,13 @@ C     We make a crude estimation if intergrals can be kept in memory
       keepov = .true.
       res    = lenv - ndbf*ndbf
       if (res .le. 0) call gauerr ('Insufficient memory in ctrmemest:0')
+
+      keepx = .true.
+      res   = lenv - ngrid*nbasis
+      if (res .le. 0) call gauerr ('Insufficient memory in ctrmemest:1')
       
 C     Fixme: this is completely wrong
-      if ((lenv-ndbf*nbsq-2*nbsq-3*nbsq-npmax*nbsq).gt.0)
+      if ((lenv-ndbf*nbsq-2*nbsq-3*nbsq-npmax*nbsq-nbasis*ngrid).gt.0)
      &        then
          keepints = .true.
          res = res - ndbf*nbsq
@@ -62,7 +67,7 @@ C     Fixme: this is completely wrong
          keepints = .false.
       endif
       
-      if (res .le. 0) call gauerr ('Insufficient memory in ctrmemest:1')
+      if (res .le. 0) call gauerr ('Insufficient memory in ctrmemest:2')
 
 C     Just set fixed values in a dumb way for now
 
@@ -76,7 +81,7 @@ C     Scratch buffers for loading grid blocks
      &        - nump*numq*npmax - ndbf*pqmax*(npmax + 1)
          
       if (res .lt. 0)
-     &     call gauerr('Insufficient memory in ctrmemest:2')
+     &     call gauerr('Insufficient memory in ctrmemest:3')
 
 C     Keep W buffer and F buffer. For RI, 2 F buffers are needed
 
@@ -84,9 +89,9 @@ C     Keep W buffer and F buffer. For RI, 2 F buffers are needed
       
       if (numkl .gt. ndbf) numkl = ndbf
       
-C     We take 
+C     
       if (numkl .lt. 2)
-     &     call gauerr('Insufficient memory in ctrmemest:3')
+     &     call gauerr('Insufficient memory in ctrmemest:4')
 
 C     Now assign all sizes
 

@@ -63,7 +63,7 @@ C     Arguments
 C     Pointers and sizes
 
       integer    jend, next, jovoff
-      integer    jov, j2eint,jwbuf, jfbuf, jxbufp, jxbufq
+      integer    jov, jx, j2eint,jwbuf, jfbuf, jxbufp, jxbufq
       integer    jscr, jebuf
       integer    lenwbuf, lenfbuf, lenxbufp, lenxbufq, lenscr, lenebuf
 
@@ -79,7 +79,7 @@ C     other
       integer    ikl, ip, iq, ik, il, ij
       integer    ioff, ldlen
 
-      logical    keepints, keepov, dbg
+      logical    keepints, keepov, keepx, dbg
 
       integer    irwria, irwrib, irwric, irwrid
       integer    dims(4)
@@ -101,7 +101,7 @@ C     Figure out NDBF
       nbsq   = nbasis*nbasis
           
       call ctrmemest2(iout, iprint, nbasis, ngrid, ndbf,
-     &     keepov, keepints, numkl, nump, numq, lenwbuf, lenfbuf,
+     &     keepov, keepints, keepx, numkl, nump, numq, lenwbuf, lenfbuf,
      &     lenxbufp, lenxbufq, lenscr, lenebuf, v(jend), lenv - jend) 
 
 C---------------------------------------------------+      
@@ -131,6 +131,12 @@ C     Allocate files for half projected integrals and half projected integrals t
          jend   = jend + next
       endif
 
+      if (keepx) then
+         jx   = jend
+         call fileio(2,-irwfac,ngrid*nbasis,v(jx),0)
+         jend = jx + ngrid*nbasis
+      endif
+      
 C     Allocate RWF for the E matrix
       
       call conddf (irwe, ngrid*ngrid)
@@ -189,13 +195,19 @@ C     Loop over left quadrature
            else
               jnump = nump
            endif
-           
-C     Load letf quadrature block from file
+
+
+C     Load quadrature block from file
 
            ioff  = jp*nbasis
            ldlen = jnump*nbasis 
+
+           if (keepx) then
+              jxbufp = jx + ioff
+           else
+              call fileio(2,-irwfac,ldlen,v(jxbufp),ioff)
+           endif
            
-           call fileio(2,-irwfac,ldlen,v(jxbufp),ioff)
 C
 C     Do F(kl, P) = sum_{i,j} X(i,P) X(j,P) (i,j| kl)
 C 
