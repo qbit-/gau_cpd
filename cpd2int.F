@@ -482,6 +482,13 @@ C-----------------------------------------------------------------------------+
      &        lenv - jend)
       endif
 
+C-----------------------------------------------------------------------------+
+C     Scale quadrature to coincide with PRISM scaling, possibly convert to    |
+C     5d/7f                                                                   |
+C-----------------------------------------------------------------------------+
+      call convquad (iout, iprint, .true.,
+     &     .false., .false., ngrid, irwfac, v(jend), lenv - jend)
+      
 C-----------------------------------------------------------------------------+      
 C     Compute spatial overlap using collocation from irwfac                   |
 C-----------------------------------------------------------------------------+      
@@ -499,7 +506,7 @@ C-----------------------------------------------------------------------------+
      &        v(jend), lenv - jend)
          
       else
-         call frmemtri(iout, iprint, nbasis, ngrid, jsym2e, neq, neqshl,
+         call frmemtri(iout, iprint, nbas6d, ngrid, jsym2e, neq, neqshl,
      &        neqsh2, ir12, ritol, accdes, ndbf6d, irwfac,
      &        irwria, irwrib, irwe, v(jend), lenv - jend)
       endif

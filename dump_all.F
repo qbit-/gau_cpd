@@ -126,13 +126,20 @@ C     other variables
       integer     nrank, itol, ritol   
       integer     ii, junk
       real*8      accdes
-
+      real*8      xx
+      data        junk/0/, xx/0.0d0/
+      
       integer     ndims
       integer     dims(4)
 
+      integer     ipured, ipuref
+C     iopcl deciphering
+      
       integer     nspblk, nri
       logical     cbfn, spinor
 
+C     file handling
+      
       integer    ios
       character*(*)   filenm
       parameter   ( filenm = 'dump_all.mat')
@@ -196,6 +203,9 @@ C     format statements
  1022 format (' density fitted integrals will be computed ')
  1023 format (' RI metric pseudoinv. tolerance = ', D8.3)
  1040 format (' integrals will be replicated using symmetry')
+ 1050 format (' from /B/ 5d/6d is: ',I2,' 7f/10f is: ',I2)
+ 1060 format (' from ILSW 5d/6d is: ',I2,' 7d/10f is:',I2)
+      
       write (iout, *) ' '
       write (iout, *) ' +-------------------------------------------+'
       write (iout, *) ' |                                           |'
@@ -355,6 +365,21 @@ C     Load /B2/ with the density basis.
          call getmbn(I5DB2,I7FB2,NShelB,ShelTB,ShelCB,ndbf)
       endif
 
+C     figure out purity
+      
+      call rdwrb(2,0)         
+
+      write(iout, 1050) I5DB1, I7FB1
+      
+C     Get 6d basis used with all quadratures
+
+      call getnb6(nbas6d)
+      if (nbasis .ne. nbas6d)
+C     &  call gauerr('Spherical basis is different from cart')
+     & write(iout,*) 'Spherical basis is different from cart'
+      write (iout, *)
+
+      
 C     Clean the previous file if it existed
       open(unit=771, iostat=ios, file=filenm, status='old')
       if (ios .eq. 0) close(771, status='delete')
@@ -372,14 +397,28 @@ C-----------------------------------------------------------------------------+
      &        lenv - jend)
       endif
 
+      call convquad (iout, iprint, .true.,
+     &     .false., .false., ngrid, irwfac, v, lenv)
+
 C     Dump quadrature
 
       if (outquad) then
-         call tstcor(nbasis*ngrid ,lenv,'dump_all: quadrature')      
-         call fileio (2, -irwfac, nbasis*ngrid, v(jend), 0)
+         call tstcor(nbas6d*ngrid + nbas6d,lenv,'dump_all: quadrature')      
+         call fileio (2, -irwfac, nbas6d*ngrid, v(jend), 0)
+c$$$         if (nbas6d .ne. nbasis) then
+c$$$            call genaos(I5DB1, I7FB1, NShell, ShellT, ShellC, junk, AOS)
+c$$$            call redoc1(iout, iprint, .false., 1,1, I5DB1,I7FB1, nbas6d,
+c$$$     &           nbasis, nbas6d, ngrid, NShell, ShellT, ShellC,
+c$$$     &           v(jend),v(jend + nbas6d*ngrid))
+c$$$            call pcck(0, junk, v(jend), nbas6d, ngrid,
+c$$$     &           nbasis, ngrid)
+c$$$         endif
+         
          dims(1) = nbasis
          dims(2) = ngrid
-         call outoctfmt (iout, filenm, 2, 1,'X', 2, dims, v(jend))
+         call outoctfmt (iout, filenm, 2, 1,'X', 2, dims,
+     &        v(jend))
+         
       endif
       
 C-----------------------------------------------------------------------------+
@@ -409,9 +448,9 @@ C-----------------------------------------------------------------------------+
          dims(2) = ndbf   
          call outoctfmt (iout, filenm, 2, 1, 'J', 2, dims,
      &        v(jend))
-         
-         dims(1) = nbasis
-         dims(2) = nbasis
+
+         dims(1) = nbas6d
+         dims(2) = nbas6d
          dims(3) = ndbf   
          call outoctfmt (iout, filenm, 2, 1, 'K', 3, dims,
      &        v(jend + jovoff))
@@ -427,11 +466,6 @@ C-----------------------------------------------------------------------------+
       if (cbfn) then
          call gauerr('dump_all: Complex bases are not supported yet')
       endif
-
-      lenx = itqry(irwx)
-      lenx = itqry(irws)
-      lenx = itqry(irwca)
-      lenx = itqry(irwcb)
 
       if (outaox) then
          call tstcor(nri*nbasis*nbsuse, lenv,'dump_all: T')      
@@ -461,8 +495,16 @@ C-----------------------------------------------------------------------------+
       endif
 
       if (outmos) then
-         call tstcor(nri*nbasis*nbsuse, lenv,'dump_all: C')      
+         call tstcor(nri*nbasis*nbasis, lenv,'dump_all: C')
+         call aclear (nri*nbasis*nbasis, v(jend))
          call fileio (2, -irwca, nri*nbasis*nbsuse, v(jend), 0)
+         call trspmo(.true.,.true.,nri,nbasis,nbasis,nbsuse,
+     &        v(jend),v(jend + nri*nbasis*nbasis))
+         call adjmo2(iout,iprint,.true.,I5DB1,I7FB1,nbasis,
+     &        nbsuse*nri,NShell,ShellT,ShellC,v(jend))
+         call trspmo(.false.,.true.,nri,nbasis,nbasis,
+     &        nbsuse,v(jend),v(jend + nri*nbasis*nbasis))
+      
          dims(1) = nbasis
          dims(2) = nbsuse
          if (nri .eq. 1) then
@@ -471,8 +513,16 @@ C-----------------------------------------------------------------------------+
             call outoctfmt (iout, filenm, 2, 2, 'CA', 2, dims, v(jend))
          endif            
 
-         if (nspblk .eq. 2) then      
+         if (nspblk .eq. 2) then
+            call aclear (nri*nbasis*nbasis, v(jend))
             call fileio (2, -irwcb, nri*nbasis*nbsuse, v(jend), 0)
+            call trspmo(.true.,.true.,nri,nbasis,nbasis,nbsuse,
+     &           v(jend),v(jend + nri*nbasis*nbasis))
+            call adjmo2(iout,iprint,.true.,I5DB1,I7FB1,nbasis,
+     &           nbsuse*nri,NShell,ShellT,ShellC,v(jend))
+            call trspmo(.false.,.true.,nri,nbasis,nbasis,
+     &           nbsuse,v(jend),v(jend + nri*nbasis*nbasis))
+
             dims(1) = nbasis
             dims(2) = nbsuse
             if (nri .eq. 1) then
@@ -483,6 +533,9 @@ C-----------------------------------------------------------------------------+
      &          v(jend))
             endif            
          endif
+
+         call fileio (2, -irweig, 2*nbsuse, v(jend), 0)
+         call outoctfmt (iout, filenm, 2, 1, 'ee', 1, 2*nbsuse, v(jend))
       endif
       
 C-----------------------------------------------------------------------------+

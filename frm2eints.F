@@ -197,7 +197,8 @@ C     turn off symmetry
       
 C     no idea what it is (set according l906)
       nbti   = 0
-            
+
+      call genaos(I5DB1, I7FB1, NShell, ShellT, ShellC, junk, AOS)
       call fofcou(iout,iprtf,ihmeth,iopcl,icntrl,iraf,nomega,
      &  omega,fmm,fmflag,fmflg1,nfxflg,ipflag,allowp,lseall,xx,
      &  0,0,.false.,.false.,.true.,.true.,.false.,i1cent,accdes,
