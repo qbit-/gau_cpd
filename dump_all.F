@@ -121,7 +121,7 @@ C     memory allocation variables
       
 C     other variables
 
-      integer     nbsq
+      integer     nbsq, nbsq6d
       integer     ngrid, nbas6d
       integer     ndbf
       integer     nrank, itol, ritol   
@@ -253,7 +253,13 @@ C     with user supplied if available
       irangdu = iop(62)
       if ( irangdu .ne. 0 ) irangd = irangdu
 
-C     Defaults if nothing is set
+C     Try to recover iradan from a previous CPD run
+
+      if (iradan .eq. 0) then
+         call ilsw (2, 80, iradan)      
+      endif
+      
+C     Defaults if still nothing is set
       if ( iradan .eq. 0 ) iradan = iradandef
       if ( iranwt .eq. 0 ) iranwt = iranwtdef
       if ( irangd .eq. 0 ) irangd = irangddef
@@ -358,7 +364,8 @@ C     Get 6d basis used with all quadratures
 C      if (nbasis .ne. nbas6d)
 C     &  call gauerr ('cpd2int: Spherical bases are not supported yet')
       write (iout, *)
-
+      nbsq = nbasis*nbasis
+      nbsq6d = nbas6d*nbas6d
 
       if (ri) then
 C     Load /B2/ with the density basis.
@@ -397,24 +404,34 @@ C-----------------------------------------------------------------------------+
      &        .false., nbsuse, junk, ngrid, irwfac, v(jend),
      &        lenv - jend)
       endif
-
-      if (nbasis .ne. nbas6d) then
-         dopure = .true.
-      endif
       
-      call convquad (iout, iprint, .true.,
-     &     dopure, .false., ngrid, irwfac, v, lenv)
-
 C     Dump quadrature
-
+      
       if (outquad) then
          call tstcor(nbas6d*ngrid,lenv,'dump_all: quadrature')      
          call fileio (2, -irwfac, nbas6d*ngrid, v(jend), 0)
          
-         dims(1) = nbasis
+         dims(1) = nbas6d
          dims(2) = ngrid
-         call outoctfmt (iout, filenm, 2, 1,'X', 2, dims,
+         call outoctfmt (iout, filenm, 2, 1,'Xu', 2, dims,
      &        v(jend))
+
+         call fileio (2, -irwfac, nbas6d*ngrid, v(jend), 0)
+
+         if (nbasis .ne. nbas6d) then
+            call convquad (iout, iprint, .false.,
+     &           .true., .false., ngrid, irwfac, v(jend), lenv - jend)
+            call fileio (2, -irwfac, nbasis*ngrid, v(jend), 0)
+            dims(1) = nbasis
+            dims(2) = ngrid
+            call outoctfmt (iout, filenm, 2, 1,'X', 2, dims,
+     &     v(jend))      
+         else
+            dims(1) = nbas6d
+            dims(2) = ngrid
+            call outoctfmt (iout, filenm, 2, 1,'X', 2, dims,
+     &           v(jend))      
+         endif
          
       endif
       
@@ -441,13 +458,33 @@ C-----------------------------------------------------------------------------+
          call  frm2eri (iout, iprint, jsym2e, neq, neqshl, 
      &     neqsh2, ir12, .true., .true., ritol, accdes, jovoff,
      &     next, irwria, irwrib, v, lenv)
+
          dims(1) = ndbf
          dims(2) = ndbf   
          call outoctfmt (iout, filenm, 2, 1, 'J', 2, dims,
      &        v(jend))
 
-         dims(1) = nbas6d
-         dims(2) = nbas6d
+
+C         call genaos(I5DB1, I7FB1, NShell, ShellT, ShellC, junk, AOS)
+
+c$$$         do 150 ii = 0,ndbf-1
+c$$$            call adjdf3(.true.,.true.,MaxTyp,NShell,ShellT,ShellC,
+c$$$     &           v(jend + jovoff + nbsq6d*ii))
+c$$$ 150     continue
+c$$$         
+c$$$         call purcar(iout,2,.true.,.true.,.false.,
+c$$$     $    .false.,.false.,.false.,.true.,.false.,.false.,nbasis,nbas6d,
+c$$$     $    1,ndbf,1,0,0,I5DB1,I7FB1,v(jend+jovoff),xx,
+c$$$     $        xx,xx,xx,xx,xx,xx,xx,v(jend + jovoff+nbsq6d*ndbf),
+c$$$     $        lenv - jend - nbsq6d*ndbf)
+
+c$$$         Subroutine PurCar(IOut,IPrint,ToPure,DoX,DoZ,
+c$$$     $        DoCISG,DoC,DoXD,SqMat,HaveXB,DoDens,NBasis,NBas6D,
+c$$$     $        NMtPBC,NMat,NMatS,NMO,NMtFkD,IPureD,IPureF,
+c$$$     $        XA,XB,PZA,PZB,CIDenA,CIDenB,CMO,XDA,XDB,V,MDV)
+
+         dims(1) = nbasis
+         dims(2) = nbasis
          dims(3) = ndbf   
          call outoctfmt (iout, filenm, 2, 1, 'K', 3, dims,
      &        v(jend + jovoff))

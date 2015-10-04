@@ -38,7 +38,7 @@ C     Arguments
 
 C     Other
 
-      integer    nbas6d, ndbf
+      integer    ndbf
       integer    nbsq, npmax, res, pqmax
 
 C     functions 

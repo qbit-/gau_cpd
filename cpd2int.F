@@ -411,8 +411,10 @@ C     Read /mol/
 C     Get 6d basis used with all quadratures
 
       call getnb6(nbas6d)
-      if (nbasis .ne. nbas6d)
-     &  call gauerr ('cpd2int: Spherical bases are not supported yet')
+c$$$      if (nbasis .eq. nbas6d ) then 
+c$$$         call gauerr('cpd2int: Cartesian bases are not supported')
+c$$$      endif
+      
       write (iout, *)
 
 C-----------------------------------------------------------------------------+
@@ -427,54 +429,12 @@ C-----------------------------------------------------------------------------+
          dotran = .false.
       endif
       
-c$$$      if (dotran) then
-c$$$         call decosc(iopcl,nspblk,nri,junk,cbfn,junk,spinor)
-c$$$
-c$$$         if (cbfn) then
-c$$$            call gauerr('cpd2int: Complex bases are not supported yet')
-c$$$         endif
-c$$$
-c$$$         lenx = itqry(irwx)
-c$$$         if (lenx .ne. nbasis*nbsuse) then
-c$$$            write (iout, '(A,I4,A,I4)') ' lenx expected = ',
-c$$$     &           nbasis*nbsuse, ' but got = ', lenx
-c$$$            write (iout, '(A,A)') ' Make sure to run l325 before l401',
-c$$$     &       ' aborting ...'
-c$$$!            call gauerr ('cpd2int: localization')
-c$$$         endif
-c$$$
-c$$$         jxa     = jend
-c$$$         jxb     = jxa + nbasis*nbasis + lenx
-c$$$         jscrmap = jxa + nbasis*nbasis
-c$$$         jend    = jscrmap + nbasis 
-c$$$         
-c$$$         call tstcor(jend ,lenv,'cpd2int: localization')
-c$$$
-c$$$         call fileio (2, -irwx, lenx, v(jxa), 0)
-c$$$         dims(1) = nbasis
-c$$$         dims(2) = nbsuse
-c$$$         call outoctfmt(iout, 't.mat', 1, 't', 2, dims, v(jxa))
-c$$$
-c$$$C     Modify iopcl as localize does not like complex
-c$$$
-c$$$         iopclx = 0
-c$$$         units  = .false.
-c$$$         methlc = 2
-c$$$
-c$$$        call localize(iout,5,iopclx,methlc,units,natoms,
-c$$$     &        nbsuse,nbasis,v(jxa),xx,v(jscrmap),v(jend),lenv-jend)
-c$$$        dims(1) = nbasis
-c$$$        dims(2) = nbsuse
-c$$$        call outoctfmt(iout, 'j.mat', 1, 'j', 2, dims, v(jend))
-c$$$         
-c$$$      endif
-      
 C-----------------------------------------------------------------------------+
 C     Compute the collocation matrix X(mu,G) and save it to the RWF irwfac    |
 C-----------------------------------------------------------------------------+
 
       if (extgrid) then
-         call frmextquad (iout, iprint, 'grid.dat', 0, 
+         call frmextquad (iout, iprint, 'grid.dat', 1, 
      &        nbas6d, ngrid, irwfac, v(jend), lenv - jend)
       else
          call frmquad (iout, iprint, iradan, iranwt, irangd, iopcl,
@@ -483,11 +443,13 @@ C-----------------------------------------------------------------------------+
       endif
 
 C-----------------------------------------------------------------------------+
-C     Scale quadrature to coincide with PRISM scaling, possibly convert to    |
-C     5d/7f                                                                   |
+C     Convert the quadrature to 5d/7f, possibly transform to MO basis         |
 C-----------------------------------------------------------------------------+
-      call convquad (iout, iprint, .true.,
-     &     .false., .false., ngrid, irwfac, v(jend), lenv - jend)
+
+      if (.not. ri) then
+         call convquad (iout, iprint, .false.,
+     &        .true., .false., ngrid, irwfac, v(jend), lenv - jend)
+      endif
       
 C-----------------------------------------------------------------------------+      
 C     Compute spatial overlap using collocation from irwfac                   |
@@ -506,7 +468,7 @@ C-----------------------------------------------------------------------------+
      &        v(jend), lenv - jend)
          
       else
-         call frmemtri(iout, iprint, nbas6d, ngrid, jsym2e, neq, neqshl,
+         call frmemtri(iout, iprint, nbasis, ngrid, jsym2e, neq, neqshl,
      &        neqsh2, ir12, ritol, accdes, ndbf6d, irwfac,
      &        irwria, irwrib, irwe, v(jend), lenv - jend)
       endif

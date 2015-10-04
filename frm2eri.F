@@ -53,7 +53,7 @@ C     prism variables
 C     other
 
       integer     jend, jria, jrints, junk
-      integer     nbas6d, ndbf, ndbf6d   
+      integer     nbas6d, ndbf, ndbf6d  
 
       integer     itol
 C     

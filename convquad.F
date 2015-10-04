@@ -50,7 +50,9 @@ C     Get basis information. Load /B/
       call rdwrb(2,0)
       call getmbn(I5DB1,I7FB1,NShell,ShellT,ShellC,nbasis)      
       call getmbn(1,1,NShell,ShellT,ShellC,nbas6d)
-      
+
+      call genaos(I5DB1, I7FB1, NShell, ShellT, ShellC, junk, AOS)
+
 C     memory allocation
 
       jxbuf = jend
@@ -65,14 +67,17 @@ C     memory allocation
      &        ngrid,NShell,ShellT,ShellC,v(jxbuf))
       endif
       
-      if (donorm .and. dopure) then
-            call genaos(I5DB1, I7FB1, NShell, ShellT, ShellC, junk, AOS)
-            call redoc1(iout, iprint, .false., 1,1, I5DB1,I7FB1, nbas6d,
-     &           nbasis, nbas6d, ngrid, NShell, ShellT, ShellC,
-     &           v(jxbuf),v(jscr))
-            call pcck(0, junk, v(jxbuf), nbas6d, ngrid,
-     &           nbasis, ngrid)
+      if (dopure) then
+         call purcar(iout,iprint,.true.,.false.,.false.,.false.,.true.,
+     &        .false.,
+     &        .true.,.false.,.false.,nbasis,nbas6d,1,1,0,ngrid,0,
+     &        I5DB1,I7FB1,xx,xx,xx,xx,xx,xx,v(jxbuf),xx,xx,v(jend),
+     &        lenv - jend)
+      endif
 
+      if (dotran) then
+         call adjmo2 (iout, iprint,.true.,I5DB1,I7FB1,nbasis,
+     &        ngrid,NShell,ShellT,ShellC,v(jxbuf))
       endif
 
       call fileio (1, -irwfac,nbas6d*ngrid, v(jxbuf),0)

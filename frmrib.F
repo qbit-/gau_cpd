@@ -32,6 +32,8 @@ C
 C     Compute lengths
       NBSq6D = NBas6D*NBas6D
       NTT6D  = (NBas6D*(NBas6D+1))/2
+      call getmbn(I5DB1,I7FB1,NShell,ShellT,ShellC,nbasis)
+      NBsq   = NBasis*NBasis
 C
 C     Allocate memory.
       next   = 0
@@ -74,19 +76,36 @@ C     Fix AOS in /B/ as FoFCou converted it back to pure.
 C      (P|m,n) -> (m,n|P)
       Call TrCor1(1,1,NBSq6D,NDBF,3,V(jBAO),XX,XX,V(jXTmp),XX,XX,
      $     .False.,XX,XX)
-      Call Amove(NDBF*NBSq6D, V(jXTmp), V(jBAO))
+
+C     Renormalize D and F shells to PRISM norm in RI integrals
+      Call GenAOS(I5DB1,I7FB1,NShell,ShellT,ShellC,Junk,AOS)
+      NP = NProc(1)
+C$OMP Parallel Do If(NP.gt.1) Default(Shared)
+C$OMP+ Private(ii)      
+      do 150 ii = 0,ndbf-1
+         Call Adjdf3(.true.,.true.,MaxTyp,NShell,ShellT,ShellC,
+     &        v(jXTmp+ii*NBsq6d))
+ 150  continue
+
+C     Convert PRISM normalized integrals to 5d/7f
+      call purcar(iout,2,.true.,.true.,.false.,
+     $    .false.,.false.,.false.,.true.,.false.,.false.,nbasis,nbas6d,
+     $    1,ndbf,1,0,0,I5DB1,I7FB1,v(jXTmp),xx,
+     $        xx,xx,xx,xx,xx,xx,xx,v(jEnd),
+     $        MDV - jEnd)
+      Call Amove(NDBF*NBSq, V(jXTmp), V(jBAO))
       
 C     Allocate the B file and save integrals if requested
       if(.not. keep) then
-         LenRWB = NDBF*NBSq6D
+         LenRWB = NDBF*NBSq
          IRwRIB = IGetRW(LenRWB,0)
-         Call FileIO(1,-irwrib,NDBF*NBSq6D,V(jBAO),0)
+         Call FileIO(1,-irwrib,NDBF*NBSq,V(jBAO),0)
       endif
 
       Dbg = .False.
       if (Dbg) then
-         Dims(1) = nbas6d
-         Dims(2) = nbas6d
+         Dims(1) = nbasis
+         Dims(2) = nbasis
          Dims(3) = ndbf
          call outoctfmt (iout, 'intsri.mat', 1, 1,'intsri', 3, dims,
      $    v(jBAO))
