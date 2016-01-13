@@ -5,14 +5,14 @@ GAU_DIRA = $(GAU_DIR)
 NUTIL=$(GAU_DIR)/util.a
 
 MKLROOT=/opt/intel/composerxe-2013.3.174/mkl
-INTELROOT=/opt/intel/composerxe-2013_update4.5.192/compiler
+INTELROOT=/opt/intel/composerxe-2013.3.174/compiler
 INTELPATH = $(INTELROOT)/lib/intel64
 MKLPATH = $(MKLROOT)/lib/intel64
 MKLINCLUDE = -I$(MKLROOT)/include -I$(INTELROOT)/include
 MKLLIB = -L$(MKLPATH) -L$(INTELPATH) -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm 
 PROFFLAG = #-Mprof=func
-OPTFLAG  = -O0 -g 
-FC0      = pgf77 -i8 -r8 -mp
+OPTFLAG  = -O3 -mp 
+FC0      = pgf77 -i8 -r8 -mp -O3
 #FC0 = pgf90 -Wl,-z,muldefs
 
 .SUFFIXES:

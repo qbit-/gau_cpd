@@ -228,6 +228,9 @@ C----------------------------------------------------------------------+
       write (iout, 1001)
       write (iout, *)
 
+C     read /gen/
+
+      call fileio (2, -irwgen, lengen, dgen, 0)
 
 C     Set printing level.
 
@@ -391,6 +394,18 @@ C     &  call gauerr('Spherical basis is different from cart')
 C     Clean the previous file if it existed
       open(unit=771, iostat=ios, file=filenm, status='old')
       if (ios .eq. 0) close(771, status='delete')
+
+C-----------------------------------------------------------------------------+
+C     Dump some scalars                                                       |
+C-----------------------------------------------------------------------------+
+
+      call fileio (2, -irwgen, lengen, dgen, 0)
+
+C     SCF energy
+      call outoctfmt (iout, filenm, 2, 1, 'e_scf', 1, 1, dgen(32))
+C     CC/CI energy
+      call outoctfmt (iout, filenm, 2, 1, 'e_cc', 1, 1, dgen(9))
+
       
 C-----------------------------------------------------------------------------+
 C     Compute the collocation matrix X(mu,G) and save it to the RWF irwfac    |

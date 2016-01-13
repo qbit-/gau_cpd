@@ -24,7 +24,7 @@
         call initscm (1, 0, 0, work, ioff, mdv)
         call dump_all (work(ioff+1), mdv)
       else
-        call prtstat (istat, 'ML325')
+        call prtstat (istat, 'ML330')
       endif
 
 
