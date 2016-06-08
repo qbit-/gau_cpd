@@ -59,6 +59,7 @@ C |                2 - dump overlap and AO to MO transform     |
 C |                4 - dump MOs and eigenvalues                |
 C |               10 - dump DF integrals and DF overlap        |
 C |               20 - dump full integrals                     |
+C |               40 - dump T2 amplitudes 
 C |         options can be added, example: 13 - DF integrals + |
 C |                  quadrature + overlap                      |      
 C +------------------------------------------------------------+
@@ -89,7 +90,20 @@ C     other common blocks
 
       equivalence (isym2e, ibf(30))
 
-C     general array
+c     /orb/ common - various orbital dimensions
+
+      common/orb/ispect,lspect,nrorb,noa,nva,nob,nvb,noaob,noava,noavb,
+     &  nobva,nobvb,nvavb,noa2,noa3,nob2,nob3,nva2,nva3,nvb2,nvb3,
+     &  novaa,novab,novbb,maxbuc,ieval,ioab,loab
+      
+      integer      ispect,lspect,nrorb,noa,nva,nob,nvb,noaob,noava,noavb
+      integer      nobva,nobvb,nvavb,noa2,noa3,nob2,nob3,nva2,nva3,nvb2
+      integer      nvb3,novaa,novab,novbb,maxbuc,ieval,ioab,loab
+      integer      lenorb
+
+      integer      nvava, nvbvb, novaat, novbbt, novabt
+      
+c     general array
 
       integer     lengen
       parameter   ( lengen = 55 )
@@ -111,13 +125,13 @@ C     general option variables
       logical     dopure
       
       integer     idump, idumpdef, idp
-      logical     outquad, outaox, outmos, outint, outintdf
+      logical     outquad, outaox, outmos, outint, outintdf, outamp
 
       parameter   (idumpdef = 21)
       
 C     memory allocation variables
 
-      integer     jend, jovoff, jcsr, lenx, next, lenv
+      integer     jend, jovoff, jscr, lenx, next, lenv, lenscr
       
 C     other variables
 
@@ -134,6 +148,8 @@ C     other variables
       integer     dims(4)
 
       integer     ipured, ipuref
+
+      
 C     iopcl deciphering
       
       integer     nspblk, nri
@@ -151,11 +167,13 @@ C     Needed for commonb2 to work with implicit none
 
 C     RWF files
 
-      integer     irwfac, irwspo, irwz, irwe
-
+      integer     irwfac, irwspo, irwz, irwe, irwamp
+      integer     irworb
+      
       parameter   ( irwfac = 824, irwspo = 826 )
       parameter   ( irwe = 827, irwz = 828 )
-
+      parameter   ( irworb = 545, irwamp = 570 )
+      
 C     Scratch RWFs
       
       integer     irw2efull
@@ -222,7 +240,6 @@ C     format statements
 C----------------------------------------------------------------------+
 C       Process options for Dump all                                   |
 C----------------------------------------------------------------------+
-
 
       write (iout, *)
       write (iout, 1001)
@@ -293,6 +310,8 @@ C     Decide on what to output
       outquad = (idp .eq. 1)
 
       idp = ( (mod(idump,100) / 10) )
+      outamp = ( ( idp / 4) .ge. 1 )
+      idp = mod(idp,4)
       outint = ( (idp / 2) .ge. 1 )
       idp = mod(idp,2)
       outintdf = (idp .eq. 1)
@@ -390,11 +409,12 @@ C     &  call gauerr('Spherical basis is different from cart')
      & write(iout,*) 'Spherical basis is different from cart'
       write (iout, *)
 
-      
 C     Clean the previous file if it existed
       open(unit=771, iostat=ios, file=filenm, status='old')
-      if (ios .eq. 0) close(771, status='delete')
-
+      if (ios .eq. 0) then
+         close(771, status='delete')
+      endif   
+         
 C-----------------------------------------------------------------------------+
 C     Dump some scalars                                                       |
 C-----------------------------------------------------------------------------+
@@ -405,6 +425,8 @@ C     SCF energy
       call outoctfmt (iout, filenm, 2, 1, 'e_scf', 1, 1, dgen(32))
 C     CC/CI energy
       call outoctfmt (iout, filenm, 2, 1, 'e_cc', 1, 1, dgen(9))
+C     MP2 energy
+      call outoctfmt (iout, filenm, 2, 1, 'e_mp2', 1, 1, dgen(33))
 
       
 C-----------------------------------------------------------------------------+
@@ -542,7 +564,7 @@ C-----------------------------------------------------------------------------+
             call outoctfmt (iout, filenm, 2, 2, 'S', 2, dims, v(jend))
          endif            
       endif
-
+      
       if (outmos) then
          call tstcor(nri*nbasis*nbasis, lenv,'dump_all: C')
          call aclear (nri*nbasis*nbasis, v(jend))
@@ -585,8 +607,98 @@ C-----------------------------------------------------------------------------+
 
          call fileio (2, -irweig, 2*nbsuse, v(jend), 0)
          call outoctfmt (iout, filenm, 2, 1, 'ee', 1, 2*nbsuse, v(jend))
+
+         if (outamp) then
+C     load /orb/ block
+            lenorb = intowp(28)
+            call fileio(2,-irworb,lenorb,ispect,0)
+C     Do some ugly additional size calculation
+            nvava = nva*nva
+            nvbvb = nvb*nvb
+            novabt = noa*nob*nva*nvb
+            novaat = noa*(noa-1)/2*nva*(nva-1)/2
+            novbbt = nob*(nob-1)/2*nvb*(nvb-1)/2
+            lenscr = max(noa*noa*nva*nva, nob*nob*nvb*nvb)
+            jscr   = jend
+            jend   = jscr + lenscr
+            
+            lenx = itqry(irwamp)
+            write (iout, '(A,I20)') ' size of amp file = ', lenx
+            lenx = 0
+C     Here something strange happens, as my code coincides
+C     with reading T1 in the (nv,no) form.
+C     Apparently, Tom's code supports my point, and the actual order is (nv,no) (C-type)
+            
+C     dump T1 alpha part 
+            dims(1) = nva
+            dims(2) = noa
+            call fileio(2,-irwamp,noava,v(jend),lenx)
+            lenx = lenx + noava
+            call outoctfmt (iout, filenm, 2, 1, 't1a', 2, dims, v(jend))
+            
+            if(iopcl.ne.0) then
+C     dump T1 beta part
+               dims(1) = nvb
+               dims(2) = nob
+               call fileio(2,-irwamp,nobvb,v(jend),lenx)
+               lenx = lenx + nobvb
+               call outoctfmt (iout, filenm, 2, 1, 't1b', 2, dims,
+     &              v(jend))
+
+C     dump T2(alpha,alpha,alpha,alpha) - Warning: all T2 related code will
+C     fail if any spatial symmetry was used for amplitude storage.
+               if (novaat .gt. 0) then
+c$$$                  dims(1) = noa
+c$$$                  dims(2) = noa
+c$$$                  dims(3) = nva
+c$$$                  dims(4) = nva
+                  call fileio(2,-irwamp,novaat,v(jscr),lenx)
+                  lenx = lenx + novaat
+C     unpack lower triangular
+c$$$                  call unpack_t2 (iout, noa, nva, v(jscr),
+c$$$     &                 v(jend), lenv-jend)
+c$$$                  call outoctfmt (iout, filenm, 2, 1, 't2aaaa', 4, dims,
+c$$$     &                 v(jscr))
+                  dims(1) = novaat
+                  call outoctfmt (iout, filenm, 2, 1, 't2aaaa', 1, dims,
+     &                 v(jscr))
+                  
+               endif
+            endif
+C     Here something strange happens, as my code coincides
+C     with reading T2 in the (nv,nv,no,no) form, and commenst in Gaussian say it is (no,no,nv,nv).
+C     Apparently, Tom's code supports my point, and the actual order is (nv,nv,no,no) (C-type)
+            
+C     dump T2(alpha,beta,alpha,beta)
+            dims(1) = nvb
+            dims(2) = nva
+            dims(3) = nob
+            dims(4) = noa
+            call fileio(2,-irwamp,novabt,v(jend),lenx)
+            lenx = lenx + novabt
+            call outoctfmt (iout, filenm, 2, 1, 't2abab', 4, dims,
+     &           v(jend))
+            if(iopcl.ne.0) then
+C     dump T2(beta,beta,beta,beta)
+               if (novbbt .gt. 0) then
+c$$$                  dims(1) = nob
+c$$$                  dims(2) = nob
+c$$$                  dims(3) = nvb
+c$$$                  dims(4) = nvb
+                  call fileio(2,-irwamp,novbbt,v(jscr),lenx)
+                  lenx = lenx + novbbt
+c$$$                  call unpack_t2 (iout, noa, nva, v(jscr),
+c$$$     &                 v(jend), lenv-jend)
+c$$$                  call outoctfmt (iout, filenm, 2, 1, 't2bbbb', 4, dims,
+c$$$     &                 v(jend))
+                  dims(1) = novbbt
+                  call outoctfmt (iout, filenm, 2, 1, 't2bbbb', 1, dims,
+     &                 v(jend))
+               endif
+            endif
+         endif
       endif
-      
+
 C-----------------------------------------------------------------------------+
 C     Print some summary                                                      |
 C-----------------------------------------------------------------------------+
@@ -596,8 +708,7 @@ C-----------------------------------------------------------------------------+
          write (iout, '(A,I20)') ' grid size = ', ngrid
          if (ri) write (iout, '(A,I20)') ' ndbf = ', ndbf
       endif
-
-         
+            
       call chainx(0)
       
       end

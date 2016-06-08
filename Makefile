@@ -60,7 +60,7 @@ ck325:
 
 MAIN330 = ml330.o
 
-OBJ330  = dump_all.o
+OBJ330  = dump_all.o unpack_t2.o
 
 l330.exe: $(MAIN330) $(OBJ330) $(OBJ325) $(TEMPOBJ)
 	$(FC0) $(OPTFLAG) $(PROFFLAG) $(MKLINCLUDE) -o l330.exe $(MAIN330) $(OBJ330) $(OBJ325) $(TEMPOBJ) $(OBJGAU) $(TEMPOBJGAU) $(NUTIL) \
