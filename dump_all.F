@@ -55,13 +55,22 @@ C |                0 - build grid normally                     |
 C |               >0 - read external grid                      |     
 C |  iop(80) - what to output                                  |
 C |                1 - dump quadrature X                       |
-C |                2 - dump overlap and AO to MO transform     |
+C |                2 - dump overlap and AO to orth AO transform|
 C |                4 - dump MOs and eigenvalues                |
 C |               10 - dump DF integrals and DF overlap        |
 C |               20 - dump full integrals                     |
-C |               40 - dump T2 amplitudes 
+C |               40 - dump T2 amplitudes
+C |              100 - dump localized MOs
 C |         options can be added, example: 13 - DF integrals + |
 C |                  quadrature + overlap                      |      
+C |
+C |
+C |  iop(81) - options to localize
+C |                0 - Boys
+C |                1 - Population
+C |                2 - Boys + Population
+C |               10 - localize occ/virtuals separately
+C |               20 - localize occ/virtuals together       
 C +------------------------------------------------------------+
 
 C     include some Gaussian files
@@ -126,12 +135,15 @@ C     general option variables
       
       integer     idump, idumpdef, idp
       logical     outquad, outaox, outmos, outint, outintdf, outamp
-
+      integer     ilocal, methloc
+      logical     outlocal
+      
       parameter   (idumpdef = 21)
       
 C     memory allocation variables
 
       integer     jend, jovoff, jscr, lenx, next, lenv, lenscr
+      integer     jatmap
       
 C     other variables
 
@@ -315,6 +327,14 @@ C     Decide on what to output
       outint = ( (idp / 2) .ge. 1 )
       idp = mod(idp,2)
       outintdf = (idp .eq. 1)
+
+      idp = ( (mod(idump,1000) / 100) )
+      outlocal = (idp .eq. 1)
+
+C     Options to MO localization routines
+
+      methloc = (mod(iop(81),10))
+      ilocal  = (mod(iop(81),100) / 10)
       
 C     Desired accuracy and pseudoinversion tolerance for spatial overlap
 
@@ -564,6 +584,11 @@ C-----------------------------------------------------------------------------+
             call outoctfmt (iout, filenm, 2, 2, 'S', 2, dims, v(jend))
          endif            
       endif
+
+C--------------------------------------------------------------------------
+C     Dumping of MOs
+C     Here 6d/10f MOs are adjusted to 5d/7f
+C--------------------------------------------------------------------------
       
       if (outmos) then
          call tstcor(nri*nbasis*nbasis, lenv,'dump_all: C')
@@ -608,6 +633,67 @@ C-----------------------------------------------------------------------------+
          call fileio (2, -irweig, 2*nbsuse, v(jend), 0)
          call outoctfmt (iout, filenm, 2, 1, 'ee', 1, 2*nbsuse, v(jend))
 
+C-----------------------------------------------------------------------
+C     Localization (does not handle proper 5d/7f conversion for now)
+C-----------------------------------------------------------------------
+
+      if (outlocal) then
+         call tstcor(nri*nbasis*nbasis + nbasis*natoms,
+     &        lenv,'dump_all: loc')
+         call aclear (nri*nbasis*nbasis + nbasis*natoms, v(jend))
+         jatmap = jend
+         jend   = jatmap + nbasis*natoms
+         
+         call fileio (2, -irwca, nri*nbasis*nbsuse, v(jend), 0)
+c$$$         call trspmo(.true.,.true.,nri,nbasis,nbasis,nbsuse,
+c$$$     &        v(jend),v(jend + nri*nbasis*nbasis))
+c$$$         call adjmo2(iout,iprint,.true.,I5DB1,I7FB1,nbasis,
+c$$$     &        nbsuse*nri,NShell,ShellT,ShellC,v(jend))
+c$$$         call trspmo(.false.,.true.,nri,nbasis,nbasis,
+c$$$     &        nbsuse,v(jend),v(jend + nri*nbasis*nbasis))
+
+         call localize(iout, iprint, 0, ilocal, methloc, .false.,
+     &        natoms, nbsuse, nbasis, v(jend), XX, v(jatmap),
+     &        v(jend+nbasis*nbasis*nri), lenv - jend)
+         
+         dims(1) = nbasis
+         dims(2) = nbsuse
+         if (nri .eq. 1) then
+            call outoctfmt (iout, filenm, 2, 1, 'LCA', 2, dims, v(jend))
+         elseif (nri .eq. 2) then
+            call outoctfmt (iout, filenm, 2, 2, 'LCA', 2, dims, v(jend))
+         endif            
+
+         if (nspblk .eq. 2) then
+            call aclear (nri*nbasis*nbasis, v(jend))
+            call fileio (2, -irwcb, nri*nbasis*nbsuse, v(jend), 0)
+
+c$$$            call trspmo(.true.,.true.,nri,nbasis,nbasis,nbsuse,
+c$$$     &           v(jend),v(jend + nri*nbasis*nbasis))
+c$$$            call adjmo2(iout,iprint,.true.,I5DB1,I7FB1,nbasis,
+c$$$     &           nbsuse*nri,NShell,ShellT,ShellC,v(jend))
+c$$$            call trspmo(.false.,.true.,nri,nbasis,nbasis,
+c$$$     &           nbsuse,v(jend),v(jend + nri*nbasis*nbasis))
+
+         call localize(iout, iprint, 0, ilocal, methloc, .false.,
+     &        natoms, nbsuse, nbasis, v(jend), XX, v(jatmap),
+     &        v(jend+nbasis*nbasis*nri), lenv - jend)
+
+         dims(1) = nbasis
+            dims(2) = nbsuse
+            if (nri .eq. 1) then
+               call outoctfmt (iout, filenm, 2, 1, 'LCB', 2, dims,
+     &          v(jend))
+            elseif (nri .eq. 2) then
+               call outoctfmt (iout, filenm, 2, 2, 'LCB', 2, dims,
+     &          v(jend))
+            endif            
+         endif
+
+C---------------------------------------------------------------------------
+C     Output T2 amplitudes
+C---------------------------------------------------------------------------
+         
          if (outamp) then
 C     load /orb/ block
             lenorb = intowp(28)

@@ -1,11 +1,26 @@
-      Subroutine Localize(IOut,IPrint,IOpCl,MethLc,UnitS,NAtoms,
+      Subroutine Localize(IOut,IPrint,IOpCl,ILocal,MethLc,UnitS,NAtoms,
      $  NBsUse,NBasis,CA,CB,IAtom,V,MDV)
       Implicit Real*8(A-H,O-Z)
 C
-C     Localize the occupied and virtual orbitals in CA (and possibly CB)
-C     by symmetry blocks.
+C     This is a trimmed adaptation of the Local1 subroutine from l401
+C     It does localization according to the Methlc
+C     Separate or joint localization for occ/virtual is selected by ilocal
+C     
+C     If units is set unit overlap is assumed. Otherwise AO overlap is used.
 C
+C     Ilocal option:   1 - localize occ/virtual separately. Size of occupieds
+C                          is set to NAE and NBE
+C                      2 - localize occupied/virtuals together
+C      
+C     Methlc option:   0 - Boys
+C                      1 - Population   
+C                      2 - Boys + Population
+C     IAtom is a scratch array used to form a map from basis functions to atoms
+C     Its maximum size is not figured out, but assume natom*nbasis
+C      
 #include "commonb.inc"
+#include "commonmol.inc"
+      
       Parameter (IRwS=514,IODipX=518)
       Logical UnitS, CBfn, Spinor
       Dimension CA(NBasis,NBasis),CB(NBasis,NBasis),MOUse(NBasis),
@@ -14,7 +29,11 @@ C
      $      ('                    ',10I4))
       Save One
       Data One/1.0d0/
-C
+
+C     Read /mol/
+      call rwmol(2,irwmol)
+
+C     
 C     Allocate space.
 C
       Call DecoSc(IOpCl,NSpBlk,NRI,NDimBl,CBfn,NSpBlX,Spinor)
@@ -57,7 +76,15 @@ C
       If(MethL0.eq.0.or.MethL0.eq.2)
      $  Call FileIO(2,-IODipX,3*NTT,V(IDMAO+IndDip),0)
 
-      NOAUse = NBsUse
+      If(ILocal.eq.1) then
+         NOAUse = NAE
+         NOBUse = NBE
+      else if(ILocal.eq.2) then
+         NOAUse = NBsUse
+         NOBUse = NBsUse
+      else
+        Call GauErr('ILocal out of range in Local1.')
+        endIf
 
       Call RdWrB(3,0)
       Call MakMap(I5DB1,I7FB1,NShell,ShellT,ShellC,JAn,IAtom)
