@@ -1,5 +1,5 @@
       Subroutine Localize(IOut,IPrint,IOpCl,ILocal,MethLc,UnitS,NAtoms,
-     $  NBsUse,NBasis,CA,CB,IAtom,V,MDV)
+     $  NAE,NBE,NBsUse,NBasis,CA,CB,IAtom,V,MDV)
       Implicit Real*8(A-H,O-Z)
 C
 C     This is a trimmed adaptation of the Local1 subroutine from l401
@@ -19,7 +19,6 @@ C     IAtom is a scratch array used to form a map from basis functions to atoms
 C     Its maximum size is not figured out, but assume natom*nbasis
 C      
 #include "commonb.inc"
-#include "commonmol.inc"
       
       Parameter (IRwS=514,IODipX=518)
       Logical UnitS, CBfn, Spinor
@@ -29,9 +28,6 @@ C
      $      ('                    ',10I4))
       Save One
       Data One/1.0d0/
-
-C     Read /mol/
-      call rwmol(2,irwmol)
 
 C     
 C     Allocate space.

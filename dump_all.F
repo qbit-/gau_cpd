@@ -59,18 +59,17 @@ C |                2 - dump overlap and AO to orth AO transform|
 C |                4 - dump MOs and eigenvalues                |
 C |               10 - dump DF integrals and DF overlap        |
 C |               20 - dump full integrals                     |
-C |               40 - dump T2 amplitudes
-C |              100 - dump localized MOs
+C |               40 - dump T2 amplitudes                      |
+C |              100 - dump localized MOs                      |
 C |         options can be added, example: 13 - DF integrals + |
 C |                  quadrature + overlap                      |      
-C |
-C |
-C |  iop(81) - options to localize
-C |                0 - Boys
-C |                1 - Population
-C |                2 - Boys + Population
-C |               10 - localize occ/virtuals separately
-C |               20 - localize occ/virtuals together       
+C |                                                            |
+C |  iop(81) - options to localize                             |
+C |                0 - Boys                                    |
+C |                1 - Population                              |
+C |                2 - Boys + Population                       |
+C |               10 - localize occ/virtuals separately        |
+C |               20 - localize occ/virtuals together          |
 C +------------------------------------------------------------+
 
 C     include some Gaussian files
@@ -629,10 +628,11 @@ C--------------------------------------------------------------------------
      &          v(jend))
             endif            
          endif
-
+      
          call fileio (2, -irweig, 2*nbsuse, v(jend), 0)
          call outoctfmt (iout, filenm, 2, 1, 'ee', 1, 2*nbsuse, v(jend))
-
+      endif
+      
 C-----------------------------------------------------------------------
 C     Localization (does not handle proper 5d/7f conversion for now)
 C-----------------------------------------------------------------------
@@ -653,7 +653,7 @@ c$$$         call trspmo(.false.,.true.,nri,nbasis,nbasis,
 c$$$     &        nbsuse,v(jend),v(jend + nri*nbasis*nbasis))
 
          call localize(iout, iprint, 0, ilocal, methloc, .false.,
-     &        natoms, nbsuse, nbasis, v(jend), XX, v(jatmap),
+     &        natoms, nae, nbe, nbsuse, nbasis, v(jend), XX, v(jatmap),
      &        v(jend+nbasis*nbasis*nri), lenv - jend)
          
          dims(1) = nbasis
@@ -675,11 +675,11 @@ c$$$     &           nbsuse*nri,NShell,ShellT,ShellC,v(jend))
 c$$$            call trspmo(.false.,.true.,nri,nbasis,nbasis,
 c$$$     &           nbsuse,v(jend),v(jend + nri*nbasis*nbasis))
 
-         call localize(iout, iprint, 0, ilocal, methloc, .false.,
-     &        natoms, nbsuse, nbasis, v(jend), XX, v(jatmap),
+            call localize(iout, iprint, 0, ilocal, methloc, .false.,
+     &        natoms, nae, nbe, nbsuse, nbasis, v(jend), XX, v(jatmap),
      &        v(jend+nbasis*nbasis*nri), lenv - jend)
 
-         dims(1) = nbasis
+            dims(1) = nbasis
             dims(2) = nbsuse
             if (nri .eq. 1) then
                call outoctfmt (iout, filenm, 2, 1, 'LCB', 2, dims,
@@ -689,98 +689,98 @@ c$$$     &           nbsuse,v(jend),v(jend + nri*nbasis*nbasis))
      &          v(jend))
             endif            
          endif
-
+      endif
+      
 C---------------------------------------------------------------------------
 C     Output T2 amplitudes
 C---------------------------------------------------------------------------
          
-         if (outamp) then
+      if (outamp) then
 C     load /orb/ block
-            lenorb = intowp(28)
-            call fileio(2,-irworb,lenorb,ispect,0)
+         lenorb = intowp(28)
+         call fileio(2,-irworb,lenorb,ispect,0)
 C     Do some ugly additional size calculation
-            nvava = nva*nva
-            nvbvb = nvb*nvb
-            novabt = noa*nob*nva*nvb
-            novaat = noa*(noa-1)/2*nva*(nva-1)/2
-            novbbt = nob*(nob-1)/2*nvb*(nvb-1)/2
-            lenscr = max(noa*noa*nva*nva, nob*nob*nvb*nvb)
-            jscr   = jend
-            jend   = jscr + lenscr
-            
-            lenx = itqry(irwamp)
-            write (iout, '(A,I20)') ' size of amp file = ', lenx
-            lenx = 0
+         nvava = nva*nva
+         nvbvb = nvb*nvb
+         novabt = noa*nob*nva*nvb
+         novaat = noa*(noa-1)/2*nva*(nva-1)/2
+         novbbt = nob*(nob-1)/2*nvb*(nvb-1)/2
+         lenscr = max(noa*noa*nva*nva, nob*nob*nvb*nvb)
+         jscr   = jend
+         jend   = jscr + lenscr
+         
+         lenx = itqry(irwamp)
+         write (iout, '(A,I20)') ' size of amp file = ', lenx
+         lenx = 0
 C     Here something strange happens, as my code coincides
 C     with reading T1 in the (nv,no) form.
 C     Apparently, Tom's code supports my point, and the actual order is (nv,no) (C-type)
             
 C     dump T1 alpha part 
-            dims(1) = nva
-            dims(2) = noa
-            call fileio(2,-irwamp,noava,v(jend),lenx)
-            lenx = lenx + noava
-            call outoctfmt (iout, filenm, 2, 1, 't1a', 2, dims, v(jend))
-            
-            if(iopcl.ne.0) then
+         dims(1) = nva
+         dims(2) = noa
+         call fileio(2,-irwamp,noava,v(jend),lenx)
+         lenx = lenx + noava
+         call outoctfmt (iout, filenm, 2, 1, 't1a', 2, dims, v(jend))
+         
+         if(iopcl.ne.0) then
 C     dump T1 beta part
-               dims(1) = nvb
-               dims(2) = nob
-               call fileio(2,-irwamp,nobvb,v(jend),lenx)
-               lenx = lenx + nobvb
-               call outoctfmt (iout, filenm, 2, 1, 't1b', 2, dims,
-     &              v(jend))
-
+            dims(1) = nvb
+            dims(2) = nob
+            call fileio(2,-irwamp,nobvb,v(jend),lenx)
+            lenx = lenx + nobvb
+            call outoctfmt (iout, filenm, 2, 1, 't1b', 2, dims,
+     &           v(jend))
+            
 C     dump T2(alpha,alpha,alpha,alpha) - Warning: all T2 related code will
 C     fail if any spatial symmetry was used for amplitude storage.
-               if (novaat .gt. 0) then
+            if (novaat .gt. 0) then
 c$$$                  dims(1) = noa
 c$$$                  dims(2) = noa
 c$$$                  dims(3) = nva
 c$$$                  dims(4) = nva
-                  call fileio(2,-irwamp,novaat,v(jscr),lenx)
-                  lenx = lenx + novaat
+               call fileio(2,-irwamp,novaat,v(jscr),lenx)
+               lenx = lenx + novaat
 C     unpack lower triangular
-c$$$                  call unpack_t2 (iout, noa, nva, v(jscr),
+c$$$            call unpack_t2 (iout, noa, nva, v(jscr),
 c$$$     &                 v(jend), lenv-jend)
 c$$$                  call outoctfmt (iout, filenm, 2, 1, 't2aaaa', 4, dims,
 c$$$     &                 v(jscr))
-                  dims(1) = novaat
-                  call outoctfmt (iout, filenm, 2, 1, 't2aaaa', 1, dims,
-     &                 v(jscr))
+               dims(1) = novaat
+               call outoctfmt (iout, filenm, 2, 1, 't2aaaa', 1, dims,
+     &              v(jscr))
                   
-               endif
             endif
+         endif
 C     Here something strange happens, as my code coincides
 C     with reading T2 in the (nv,nv,no,no) form, and commenst in Gaussian say it is (no,no,nv,nv).
 C     Apparently, Tom's code supports my point, and the actual order is (nv,nv,no,no) (C-type)
             
 C     dump T2(alpha,beta,alpha,beta)
-            dims(1) = nvb
-            dims(2) = nva
-            dims(3) = nob
-            dims(4) = noa
-            call fileio(2,-irwamp,novabt,v(jend),lenx)
-            lenx = lenx + novabt
-            call outoctfmt (iout, filenm, 2, 1, 't2abab', 4, dims,
-     &           v(jend))
-            if(iopcl.ne.0) then
+         dims(1) = nvb
+         dims(2) = nva
+         dims(3) = nob
+         dims(4) = noa
+         call fileio(2,-irwamp,novabt,v(jend),lenx)
+         lenx = lenx + novabt
+         call outoctfmt (iout, filenm, 2, 1, 't2abab', 4, dims,
+     &        v(jend))
+         if(iopcl.ne.0) then
 C     dump T2(beta,beta,beta,beta)
-               if (novbbt .gt. 0) then
-c$$$                  dims(1) = nob
+            if (novbbt .gt. 0) then
+c$$$  dims(1) = nob
 c$$$                  dims(2) = nob
 c$$$                  dims(3) = nvb
 c$$$                  dims(4) = nvb
-                  call fileio(2,-irwamp,novbbt,v(jscr),lenx)
-                  lenx = lenx + novbbt
+               call fileio(2,-irwamp,novbbt,v(jscr),lenx)
+               lenx = lenx + novbbt
 c$$$                  call unpack_t2 (iout, noa, nva, v(jscr),
 c$$$     &                 v(jend), lenv-jend)
 c$$$                  call outoctfmt (iout, filenm, 2, 1, 't2bbbb', 4, dims,
 c$$$     &                 v(jend))
-                  dims(1) = novbbt
-                  call outoctfmt (iout, filenm, 2, 1, 't2bbbb', 1, dims,
-     &                 v(jend))
-               endif
+               dims(1) = novbbt
+               call outoctfmt (iout, filenm, 2, 1, 't2bbbb', 1, dims,
+     &              v(jend))
             endif
          endif
       endif
