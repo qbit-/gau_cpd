@@ -8,9 +8,9 @@ C     Separate or joint localization for occ/virtual is selected by ilocal
 C     
 C     If units is set unit overlap is assumed. Otherwise AO overlap is used.
 C
-C     Ilocal option:   1 - localize occ/virtual separately. Size of occupieds
+C     Ilocal option:   0 - localize occ/virtual separately. Size of occupieds
 C                          is set to NAE and NBE
-C                      2 - localize occupied/virtuals together
+C                      1 - localize occupied/virtuals together
 C      
 C     Methlc option:   0 - Boys
 C                      1 - Population   
@@ -72,10 +72,10 @@ C
       If(MethL0.eq.0.or.MethL0.eq.2)
      $  Call FileIO(2,-IODipX,3*NTT,V(IDMAO+IndDip),0)
 
-      If(ILocal.eq.1) then
+      If(ILocal.eq.0) then
          NOAUse = NAE
          NOBUse = NBE
-      else if(ILocal.eq.2) then
+      else if(ILocal.eq.1) then
          NOAUse = NBsUse
          NOBUse = NBsUse
       else

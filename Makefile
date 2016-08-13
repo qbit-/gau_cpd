@@ -11,8 +11,10 @@ MKLPATH = $(MKLROOT)/lib/intel64
 MKLINCLUDE = -I$(MKLROOT)/include -I$(INTELROOT)/include
 MKLLIB = -L$(MKLPATH) -L$(INTELPATH) -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm 
 PROFFLAG = #-Mprof=func
-OPTFLAG  = -O3 -mp 
-FC0      = pgf77 -i8 -r8 -mp -O3
+#OPTFLAG  = -O3 -mp 
+OPTFLAG   = -O0 -g 
+#FC0      = pgf77 -i8 -r8 -mp -O3
+FC0      = pgf77 -i8 -r8 -O0 -g
 #FC0 = pgf90 -Wl,-z,muldefs
 
 .SUFFIXES:

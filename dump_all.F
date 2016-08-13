@@ -68,8 +68,8 @@ C |  iop(81) - options to localize                             |
 C |                0 - Boys                                    |
 C |                1 - Population                              |
 C |                2 - Boys + Population                       |
-C |               10 - localize occ/virtuals separately        |
-C |               20 - localize occ/virtuals together          |
+C |               00 - localize occ/virtuals separately        |
+C |               10 - localize occ/virtuals together          |
 C +------------------------------------------------------------+
 
 C     include some Gaussian files
