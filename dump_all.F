@@ -39,17 +39,6 @@ C |  iop(62) - selects the radial grid type?                   |
 C |  iop(63) - selects the tolerance of the pseudoinversion    |
 C |                of spatial overlap. Default: 10 (10^-10)    |     
 C |                                                            |
-C |  iop(109)-  RI options:                                    |
-C |           0 ... Default (2).                               |
-C |           1 ... If there is a density basis file already   |
-C |                 set up, then do RI.                        |
-C |           2 ... Ignore any density basis file do not do RI.|
-C |        NN00 ... Set the tolerance for discarding singular  |
-C |                 values in SVD in RI to 10^-NN              |
-C |                 (default 10^-6).                           | 
-C |       10000 ... Use the Coulomb operator (default).        |
-C |       20000 ... Use the overlap operator.                  |
-C |                                                            |
 C |  iop(79) - requests to read external grid from grid.dat    |
 C |                0 - build grid normally                     |
 C |               >0 - read external grid                      |     
@@ -70,6 +59,17 @@ C |                1 - Population                              |
 C |                2 - Boys + Population                       |
 C |               00 - localize occ/virtuals separately        |
 C |               10 - localize occ/virtuals together          |
+C |                                                            |
+C |  iop(109)-  RI options:                                    |
+C |           0 ... Default (2).                               |
+C |           1 ... If there is a density basis file already   |
+C |                 set up, then do RI.                        |
+C |           2 ... Ignore any density basis file do not do RI.|
+C |        NN00 ... Set the tolerance for discarding singular  |
+C |                 values in SVD in RI to 10^-NN              |
+C |                 (default 10^-6).                           | 
+C |       10000 ... Use the Coulomb operator (default).        |
+C |       20000 ... Use the overlap operator.                  |
 C +------------------------------------------------------------+
 
 C     include some Gaussian files
