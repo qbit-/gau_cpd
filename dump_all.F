@@ -464,7 +464,7 @@ C     File initialization                                                     |
 C-----------------------------------------------------------------------------+
 
       if (fnmsuff .ne. 0) then 
-         write(filenm, '(A,i2,A)') filenmdef, fnmsuff, '.mat'
+         write(filenm, '(A,A,i2.2,A)') filenmdef,'_',fnmsuff, '.mat'
       else
          write(filenm, '(A,A)') filenmdef, '.mat'
       endif
